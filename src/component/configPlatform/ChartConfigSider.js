@@ -5,13 +5,16 @@ export default class ChartConfigSider extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      configSiderVisible: true
+      configSiderVisible: false
     };
     this.onClose = this.onClose.bind(this);
   }
-  onClose(){
+  onClose = () => {
+    this.setConfigSider(false);
+  }
+  setConfigSider = (isOpen) => {
     this.setState({
-      configSiderVisible: false
+      configSiderVisible: isOpen,
     });
   }
   render(){

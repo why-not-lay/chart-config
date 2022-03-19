@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider, InputNumber } from "antd";
+import { Slider, InputNumber, Row, Col } from "antd";
 import "../../style/chartOperationArea.css"
 export default class ChartOperationArea extends React.Component {
   constructor(props){
@@ -17,44 +17,72 @@ export default class ChartOperationArea extends React.Component {
     }
     this.viewScopeEle = null;
     this.thumbEle = null;
+    this.scrollLen = 24;
+    this.scrollTimes = 5;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for(const entry of entries){
+        this.viewScopeResizeHandler();
+      }
+    });
 
   }
-  
-  thumbSelectMouseMoveHandler = (e) => {
-    console.log("move")
-    const {movementX, movementY} = e;
-    const {offsetLeft, offsetTop} = e.target;
+  viewScopeResizeHandler = () => {
+    this.initEditSider(this.state.scale);
+  }
+  thumbSelectMoveX = (movement) => {
     if(
-      offsetLeft + this.state.thumbSelectWidth + movementX <= this.state.thumbCanvasWidth
-      && offsetLeft + movementX >= 0
+      this.state.thumbSelectWidth + movement + this.state.thumbSelectShiftX<= this.state.thumbCanvasWidth
+      && this.state.thumbSelectShiftX + movement >= 0
       ){
-      console.log(e);
-      const offsetX = this.state.thumbSelectShiftX + movementX;
+      const len = this.state.width / this.scrollLen * this.scrollTimes;
+      const offsetX = this.state.thumbSelectShiftX + movement;
+      this.viewScopeEle.scrollBy({
+        top: 0,
+        left: movement * Number.parseInt(len, 10),
+        behavior: "smooth",
+      })
       this.setState({
         thumbSelectShiftX: offsetX,
       });
     }
+  }
+  thumbSelectMoveY = (movement) => {
     if(
-      offsetTop + this.state.thumbSelectHeight + movementY <= this.state.thumbCanvasHeight
-      && offsetTop + movementY >= 0
+      this.state.thumbSelectHeight + movement + this.state.thumbSelectShiftY<= this.state.thumbCanvasHeight
+      && this.state.thumbSelectShiftY + movement >= 0
       ){
-      console.log(e);
-      const offsetY = this.state.thumbSelectShiftY + movementY;
+      const len = this.state.height / this.scrollLen * this.scrollTimes;
+      const offsetY = this.state.thumbSelectShiftY + movement;
+      this.viewScopeEle.scrollBy({
+        top: movement * Number.parseInt(len, 10),
+        left: 0,
+        behavior: "smooth",
+      })
       this.setState({
         thumbSelectShiftY: offsetY,
       });
     }
   }
+  canvasClickHandler = (e) => {
+    this.props.onSetConfigSider(true);
+    e.stopPropagation();
+  }
+  containerClickHandler = (e) => {
+    this.props.onSetConfigSider(false);
+    e.stopPropagation();
+  }
+  thumbSelectMouseMoveHandler = (e) => {
+    const {movementX, movementY} = e;
+    this.thumbSelectMoveY(movementY);
+    this.thumbSelectMoveX(movementX);
+  }
   thumbSelectMouseLeaveHandler = (e) => {
-    console.log("leave");
     e.target.removeEventListener("mousemove", this.thumbSelectMouseMoveHandler);
   }
   thumbSelectMouseUpHandler = (e) => {
-    console.log("up");
     e.target.removeEventListener("mousemove", this.thumbSelectMouseMoveHandler);
   }
   thumbSelectMouseDownHandler = (e) => {
-    console.log("down");
     e.target.addEventListener("mousemove", this.thumbSelectMouseMoveHandler);
   }
   
@@ -69,25 +97,23 @@ export default class ChartOperationArea extends React.Component {
   }
   setViewScopeEle = (ele) => {
     this.viewScopeEle = ele;
+    this.resizeObserver.observe(this.viewScopeEle);
   }
   setThumbEle = (ele) => {
     this.thumbEle = ele;
   }
   initEditSider = (scale) => {
-    const len = 24;
-    const times = 5;
     const viewScopeWidth = this.viewScopeEle.clientWidth;
     const viewScopeHeight = this.viewScopeEle.clientHeight;
     const {width, height} = this.state;
-    const thumbCanvasWidth = Math.ceil(width / len * times);
-    const thumbCanvasHeight = Math.ceil(height / len * times);
+    const thumbCanvasWidth = Math.ceil(width / this.scrollLen * this.scrollTimes);
+    const thumbCanvasHeight = Math.ceil(height / this.scrollLen * this.scrollTimes);
     const realWidth = scale * width;
     const realHeight = scale * height;
     const tHeight = viewScopeHeight / realHeight > 1 ? 1 : viewScopeHeight / realHeight;
     const tWidth = viewScopeWidth / realWidth > 1 ? 1 : viewScopeWidth / realWidth;
     const thumbSelectHeight = Math.ceil(thumbCanvasHeight * tHeight);
     const thumbSelectWidth = Math.ceil(thumbCanvasWidth * tWidth);
-    //console.log(viewScopeWidth, viewScopeHeight, realWidth, realHeight, thumbSelectWidth, thumbSelectHeight);
     this.setState({
       thumbCanvasWidth: thumbCanvasWidth,
       thumbCanvasHeight: thumbCanvasHeight,
@@ -119,10 +145,11 @@ export default class ChartOperationArea extends React.Component {
             position: "relative",
             width: "100%",
             height: "100%",
-            overflow: "auto",
+            overflow: "hidden",
             padding: "10px",
           }}
           ref={this.setViewScopeEle}
+          onClick={this.containerClickHandler}
           >
           <div 
             className="chart-operation-area-canvas"
@@ -135,6 +162,7 @@ export default class ChartOperationArea extends React.Component {
               height: `${this.state.height}px`,
               transform: `translate(-50%, -50%) scale(${this.state.scale}`,
             }}
+            onClick={this.canvasClickHandler}
             >
           </div>
         </div>
@@ -155,7 +183,6 @@ export default class ChartOperationArea extends React.Component {
             ref={this.setThumbEle}
             >
           </canvas>
-
           <span
             className="select-span"
             style={{
@@ -166,21 +193,37 @@ export default class ChartOperationArea extends React.Component {
               cursor: "move",
               width: `${this.state.thumbSelectWidth}px`,
               height: `${this.state.thumbSelectHeight}px`,
-              left: `${this.state.thumbSelectShiftX}px`,
-              top: `${this.state.thumbSelectShiftY}px`,
+              transform: `translate(${this.state.thumbSelectShiftX}px, ${this.state.thumbSelectShiftY}px)`,
+              //left: `${this.state.thumbSelectShiftX}px`,
+              //top: `${this.state.thumbSelectShiftY}px`,
             }}
             onMouseDown={this.thumbSelectMouseDownHandler}
             onMouseUp={this.thumbSelectMouseUpHandler}
             onMouseLeave={this.thumbSelectMouseLeaveHandler}
             >
           </span>
-          <Slider
-            min={0.1}
-            max={1}
-            step={0.01}
-            onChange={this.sliderChangeHandler}
-            value={typeof this.state.scale === "number" ? this.state.scale : 0}
-            />
+          <Row>
+            <Col
+              flex={19}
+              >
+              <Slider
+                min={0.1}
+                max={1}
+                step={0.01}
+                onChange={this.sliderChangeHandler}
+                value={typeof this.state.scale === "number" ? this.state.scale : 0}
+                />
+            </Col>
+            <Col>
+              <InputNumber
+                min={0.1}
+                max={1}
+                step={0.01}
+                value={typeof this.state.scale === "number" ? this.state.scale : 0}
+                onChange={this.sliderChangeHandler}
+                />
+            </Col>
+          </Row>
         </div>
       </div>
     );

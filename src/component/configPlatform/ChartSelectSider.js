@@ -8,25 +8,6 @@ export default class ChartSelectSider extends React.Component {
     super(props);
   }
   render(){
-    //return (
-    //    <Drawer 
-    //      title="图表选择" 
-    //      placement="left" 
-    //      visible={true}
-    //      getContainer={false}
-    //      mask={false}
-    //      style={{position: "absolute"}}
-    //      >
-    //      <Menu
-    //        mode="inline"
-    //        style={{height: "100%"}}
-    //        >
-    //        <Menu.Item key="1">c1</Menu.Item>
-    //        <Menu.Item key="2">c2</Menu.Item>
-    //        <Menu.Item key="3">c3</Menu.Item>
-    //      </Menu>
-    //    </Drawer>
-    //);
     return (
         <Sider
           collapsible={true}

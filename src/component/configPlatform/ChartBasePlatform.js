@@ -11,26 +11,39 @@ export default class ChartBasePlatform extends React.Component {
     this.state = {
       configSiderVisible: false
     }
+    this.chartConfigSiderRef = null;
+  }
+  setConfigSider = (isOpen) => {
+    if(this.chartConfigSiderRef){
+      this.chartConfigSiderRef.setConfigSider(isOpen);
+    }
+  }
+  setChartConfigSiderRef = (ref) => {
+    this.chartConfigSiderRef = ref;
   }
   render(){
     return (
       <Layout 
         className="chart-base-platform-container" 
         style={{
-          height:"calc(100vh - 64px)", 
-          position:"relative",
+          height: "calc(100vh - 64px)", 
+          overflow: "hidden",
+          position: "relative",
         }}
         >
-        <ChartSelectSider></ChartSelectSider>
+        <ChartSelectSider/>
         <Content
           style={{
             width: "100%",
-            overflow: "auto"
           }}
           >
-          <ChartOperationArea></ChartOperationArea>
+          <ChartOperationArea
+            onSetConfigSider={this.setConfigSider}
+            />
         </Content>
-        <ChartConfigSider></ChartConfigSider>
+        <ChartConfigSider 
+          ref={this.setChartConfigSiderRef}
+          />
       </Layout>
     )
   }
