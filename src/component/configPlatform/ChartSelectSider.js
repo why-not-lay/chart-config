@@ -18,12 +18,31 @@ export default class ChartSelectSider extends React.Component {
             mode="inline"
             style={{height: "100%"}}
             >
-            <Menu.Item key="1">折线图</Menu.Item>
+            <Menu.Item 
+              key="1"
+              onClick={this.onItemClick}
+              >
+              折线图
+            </Menu.Item>
             <Menu.Item key="2">柱状图</Menu.Item>
             <Menu.Item key="3">饼图</Menu.Item>
           </Menu>
         </Sider>
     );
+  }
+  onItemClick = (e) => {
+    const chart = this.createChart();
+    this.props.onAddChart(chart);
+  }
+  createChart = () => {
+    const chart = {
+      id: Date.now(),
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    };
+    return chart;
   }
 }
 

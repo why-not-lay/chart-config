@@ -12,14 +12,7 @@ export default class ChartBasePlatform extends React.Component {
       configSiderVisible: false
     }
     this.chartConfigSiderRef = null;
-  }
-  setConfigSider = (isOpen) => {
-    if(this.chartConfigSiderRef){
-      this.chartConfigSiderRef.setConfigSider(isOpen);
-    }
-  }
-  setChartConfigSiderRef = (ref) => {
-    this.chartConfigSiderRef = ref;
+    this.chartOperationAreaRef = null;
   }
   render(){
     return (
@@ -31,7 +24,9 @@ export default class ChartBasePlatform extends React.Component {
           position: "relative",
         }}
         >
-        <ChartSelectSider/>
+        <ChartSelectSider
+          onAddChart={this.addChart}
+          />
         <Content
           style={{
             width: "100%",
@@ -39,6 +34,7 @@ export default class ChartBasePlatform extends React.Component {
           >
           <ChartOperationArea
             onSetConfigSider={this.setConfigSider}
+            ref={this.setChartOperationAreaRef}
             />
         </Content>
         <ChartConfigSider 
@@ -46,5 +42,19 @@ export default class ChartBasePlatform extends React.Component {
           />
       </Layout>
     )
+  }
+  addChart = (chart) => {
+    this.chartOperationAreaRef.addChart(chart);
+  }
+  setConfigSider = (isOpen) => {
+    if(this.chartConfigSiderRef){
+      this.chartConfigSiderRef.setConfigSider(isOpen);
+    }
+  }
+  setChartConfigSiderRef = (ref) => {
+    this.chartConfigSiderRef = ref;
+  }
+  setChartOperationAreaRef = (ref) => {
+    this.chartOperationAreaRef = ref;
   }
 }
