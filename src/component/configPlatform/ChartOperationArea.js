@@ -15,11 +15,14 @@ export default class ChartOperationArea extends React.Component {
       thumbSelectHeight: 0,
       thumbSelectShiftX: 0,
       thumbSelectShiftY: 0,
-
-      charts: [],
+      charts: {},
     }
+
     this.viewScopeEle = null;
     this.thumbEle = null;
+    this.thumbEleCtx = null;
+    this.curChartRef = null;
+    this.thumbEleRectColor = "yellow";
     this.scrollLen = 24;
     this.scrollTimes = 5;
     this.resizeObserver = new ResizeObserver((entries) => {
@@ -35,11 +38,17 @@ export default class ChartOperationArea extends React.Component {
     }
   }
   render(){
-    const chartItems = this.state.charts.map((chart) => {
+    const chartItems = Object.keys(this.state.charts).map((key) => {
+      const chart = this.state.charts[key];
       return (
         <BaseChartContainer 
-          key={chart.id}
+          key={key}
           config={chart}
+          scale={this.state.scale}
+          ref={(ref) => {
+            this.state.charts[key].ref = ref;
+          }}
+          onSetCurChartRef={this.setCurChartRef.bind(this)}
           />
       );
     });
@@ -149,10 +158,12 @@ export default class ChartOperationArea extends React.Component {
   }
   canvasClickHandler = (e) => {
     this.props.onSetConfigSider(true);
+    this.clearCurChartRef();
     e.stopPropagation();
   }
   containerClickHandler = (e) => {
     this.props.onSetConfigSider(false);
+    this.clearCurChartRef();
     e.stopPropagation();
   }
   thumbSelectMouseMoveHandler = (e) => {
@@ -165,17 +176,14 @@ export default class ChartOperationArea extends React.Component {
     }
   }
   thumbSelectMouseLeaveHandler = (e) => {
-    console.log("out")
-    //e.target.removeEventListener("mousemove", this.thumbSelectMouseMoveHandler);
+    e.target.removeEventListener("mousemove", this.thumbSelectMouseMoveHandler);
     e.stopPropagation();
   }
   thumbSelectMouseUpHandler = (e) => {
-    console.log("up")
     e.target.removeEventListener("mousemove", this.thumbSelectMouseMoveHandler);
     e.stopPropagation();
   }
   thumbSelectMouseDownHandler = (e) => {
-    console.log("down")
     e.target.addEventListener("mousemove", this.thumbSelectMouseMoveHandler);
     e.stopPropagation();
   }
@@ -191,12 +199,26 @@ export default class ChartOperationArea extends React.Component {
   /*
    * setter
    * */
+  setChartToolValiable = (ref, valiable) => {
+    if(ref){
+      ref.setToolVisible(valiable);
+      ref.setMoveable(valiable);
+    }
+  }
+  setCurChartRef = (id) => {
+    if(this.curChartRef){
+      this.setChartToolValiable(this.curChartRef, false);
+    }
+    this.curChartRef = this.state.charts[id].ref;
+    this.setChartToolValiable(this.curChartRef, true);
+  }
   setViewScopeEle = (ele) => {
     this.viewScopeEle = ele;
     this.resizeObserver.observe(this.viewScopeEle);
   }
   setThumbEle = (ele) => {
     this.thumbEle = ele;
+    this.thumbEleCtx = ele.getContext("2d");
   }
   /*
    * init
@@ -214,8 +236,8 @@ export default class ChartOperationArea extends React.Component {
     const thumbSelectHeight = Math.ceil(thumbCanvasHeight * tHeight);
     const thumbSelectWidth = Math.ceil(thumbCanvasWidth * tWidth);
 
-    const thumbSelectShiftX = Math.ceil((thumbCanvasWidth - thumbSelectWidth) / 2);
-    const thumbSelectShiftY = Math.ceil((thumbCanvasHeight - thumbSelectHeight) / 2);
+    //const thumbSelectShiftX = Math.ceil((thumbCanvasWidth - thumbSelectWidth) / 2);
+    //const thumbSelectShiftY = Math.ceil((thumbCanvasHeight - thumbSelectHeight) / 2);
     this.setState({
       thumbCanvasWidth: thumbCanvasWidth,
       thumbCanvasHeight: thumbCanvasHeight,
@@ -264,8 +286,44 @@ export default class ChartOperationArea extends React.Component {
     }
   }
   addChart = (chart) => {
+    const {id} = chart;
     this.setState({
-      charts: this.state.charts.concat(chart),
+      charts: {...this.state.charts, [id]: chart},
+    },
+    () => {
+      this.redrawThumb();
     });
+  }
+  redrawThumb = () => {
+    this.clearThumb();
+    const a = this.scrollTimes / this.scrollLen;
+    Object.keys(this.state.charts).forEach((key) => {
+      const {x, y, width, height} = this.state.charts[key]; 
+      const realX = Math.ceil(x * a);
+      const realY = Math.ceil(y * a);
+      const realWidth = Math.ceil(width * a);
+      const realHeight = Math.ceil(height * a);
+      this.addThumbRect(realX, realY, realWidth, realHeight);
+    });
+  }
+  addThumbRect = (x, y, width, height) => {
+    this.drawThumbRect(x, y, width, height, this.thumbEleRectColor);
+  }
+  removeThumbRect = () => {
+    this.drawThumbRect(x, y, width, height, "white");
+  }
+  clearThumb = () => {
+    this.drawThumbRect(0, 0, this.thumbCanvasWidth, this.thumbCanvasHeight, "white");
+  }
+  drawThumbRect = (x, y, width, height, color) => {
+    if(!this.thumbEleCtx){
+      return;
+    }
+    this.thumbEleCtx.fillStyle = color;
+    this.thumbEleCtx.fillRect(x, y, width, height);
+  }
+  clearCurChartRef = () => {
+    this.setChartToolValiable(this.curChartRef, false);
+    this.curChartRef = null;
   }
 } 
