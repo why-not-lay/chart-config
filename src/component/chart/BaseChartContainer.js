@@ -24,6 +24,7 @@ export default class BaseChartContainer extends React.Component {
           width: `${this.state.width}px`,
           height: `${this.state.height}px`,
           transform: `translate(${this.state.x}px, ${this.state.y}px)`,
+          zIndex: `${this.state.toolVisible ? 1 : 0}`,
           background: "yellow",
         }}
         onClick={this.clickHandler}
@@ -31,6 +32,12 @@ export default class BaseChartContainer extends React.Component {
         >
         <BaseChartToolComponent 
           visible={this.state.toolVisible}
+          scale={this.props.scale}
+          onSetMoveable={this.setMoveable}
+          onSetContainerMoveY={this.onSetContainerMoveY}
+          onSetContainerMoveX={this.onSetContainerMoveX}
+          onSetContainerMoveH={this.onSetContainerMoveH}
+          onSetContainerMoveW={this.onSetContainerMoveW}
           />
       </div>
     );
@@ -45,6 +52,9 @@ export default class BaseChartContainer extends React.Component {
   mouseDownHandler = (e) => {
     let {screenX: preX, screenY: preY} = e;
     const moveHandler = (me) => {
+      if(!this.moveable){
+        return;
+      }
       const {screenX: curX, screenY: curY} = me;
       const offsetX = curX - preX;
       const offsetY = curY - preY;
@@ -61,9 +71,9 @@ export default class BaseChartContainer extends React.Component {
     this.containerEle.addEventListener("mousemove", moveHandler);
     this.containerEle.addEventListener("mouseup", (ue) => {
       this.containerEle.removeEventListener("mousemove", moveHandler);
-      ue.stopPropagation();
+      //ue.stopPropagation();
     });
-    e.stopPropagation();
+    //e.stopPropagation();
   }
   mouseUpHandler = (e) => {
     this.containerEle.removeEventListener("mousemove", this.mouseMoveHandler);
@@ -77,6 +87,18 @@ export default class BaseChartContainer extends React.Component {
     if(movementY){
       this.containerMoveY(movementY, this.props.scale);
     }
+  }
+  onSetContainerMoveY = (movementY) => {
+    this.containerMoveY(movementY, this.props.scale);
+  }
+  onSetContainerMoveX = (movementX) => {
+    this.containerMoveX(movementX, this.props.scale);
+  }
+  onSetContainerMoveH = (movementH) => {
+    this.containerMoveH(movementH, this.props.scale);
+  }
+  onSetContainerMoveW = (movementW) => {
+    this.containerMoveW(movementW, this.props.scale);
   }
   /*
    * setter
@@ -102,18 +124,41 @@ export default class BaseChartContainer extends React.Component {
   /*
    * common
    * */
+  containerMoveH = (movementH, scale) => {
+    const height = this.state.height + movementH / scale;
+    this.setState({
+      height: height,
+    },
+    () => {
+      this.props.onSetChartContainerRect(this.state.id, this.state.width, this.state.height);
+    });
+  }
+  containerMoveW = (movementW, scale) => {
+    const width = this.state.width + movementW / scale;
+    this.setState({
+      width: width,
+    },
+    () => {
+      this.props.onSetChartContainerRect(this.state.id, this.state.width, this.state.height);
+    });
+  }
   containerMoveX = (movementX, scale) => {
-    console.log(scale);
     const offsetX = this.state.x + movementX / scale;
-    console.log(`offsetX: ${offsetX}`);
     this.setState({
       x: offsetX,
+    }, 
+    () => {
+      this.props.onSetChartContainerPos(this.state.id, this.state.x, this.state.y);
     });
+
   }
   containerMoveY = (movementY, scale) => {
     const offsetY = this.state.y + movementY / scale;
     this.setState({
       y: offsetY,
+    },
+    () => {
+      this.props.onSetChartContainerPos(this.state.id, this.state.x, this.state.y);
     });
   }
 }

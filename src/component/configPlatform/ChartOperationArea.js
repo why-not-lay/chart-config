@@ -21,8 +21,10 @@ export default class ChartOperationArea extends React.Component {
     this.viewScopeEle = null;
     this.thumbEle = null;
     this.thumbEleCtx = null;
-    this.curChartRef = null;
+    //this.curChartRef = null;
+    this.curChartId = 0;
     this.thumbEleRectColor = "yellow";
+    this.thumbEleSelectedRectColor = "green";
     this.scrollLen = 24;
     this.scrollTimes = 5;
     this.resizeObserver = new ResizeObserver((entries) => {
@@ -49,6 +51,8 @@ export default class ChartOperationArea extends React.Component {
             this.state.charts[key].ref = ref;
           }}
           onSetCurChartRef={this.setCurChartRef.bind(this)}
+          onSetChartContainerPos={this.setChartContainerPos.bind(this)}
+          onSetChartContainerRect={this.setChartContainerRect.bind(this)}
           />
       );
     });
@@ -199,6 +203,18 @@ export default class ChartOperationArea extends React.Component {
   /*
    * setter
    * */
+  setChartContainerRect = (id, width, height) => {
+    const chart = this.state.charts[id];
+    chart.width = width;
+    chart.height = height;
+    this.redrawThumb();
+  }
+  setChartContainerPos = (id, x, y) => {
+    const chart = this.state.charts[id];
+    chart.x = x;
+    chart.y = y;
+    this.redrawThumb();
+  }
   setChartToolValiable = (ref, valiable) => {
     if(ref){
       ref.setToolVisible(valiable);
@@ -206,11 +222,13 @@ export default class ChartOperationArea extends React.Component {
     }
   }
   setCurChartRef = (id) => {
-    if(this.curChartRef){
-      this.setChartToolValiable(this.curChartRef, false);
+    const curId = this.curChartId;
+    if(curId){
+      this.setChartToolValiable(this.state.charts[curId].ref, false);
     }
-    this.curChartRef = this.state.charts[id].ref;
-    this.setChartToolValiable(this.curChartRef, true);
+    this.curChartId = id;
+    this.setChartToolValiable(this.state.charts[id].ref, true);
+    this.redrawThumb();
   }
   setViewScopeEle = (ele) => {
     this.viewScopeEle = ele;
@@ -236,8 +254,6 @@ export default class ChartOperationArea extends React.Component {
     const thumbSelectHeight = Math.ceil(thumbCanvasHeight * tHeight);
     const thumbSelectWidth = Math.ceil(thumbCanvasWidth * tWidth);
 
-    //const thumbSelectShiftX = Math.ceil((thumbCanvasWidth - thumbSelectWidth) / 2);
-    //const thumbSelectShiftY = Math.ceil((thumbCanvasHeight - thumbSelectHeight) / 2);
     this.setState({
       thumbCanvasWidth: thumbCanvasWidth,
       thumbCanvasHeight: thumbCanvasHeight,
@@ -303,17 +319,24 @@ export default class ChartOperationArea extends React.Component {
       const realY = Math.ceil(y * a);
       const realWidth = Math.ceil(width * a);
       const realHeight = Math.ceil(height * a);
-      this.addThumbRect(realX, realY, realWidth, realHeight);
+      this.drawThumbRect(realX, realY, realWidth, realHeight, this.thumbEleRectColor);
     });
-  }
-  addThumbRect = (x, y, width, height) => {
-    this.drawThumbRect(x, y, width, height, this.thumbEleRectColor);
+    if(!this.curChartId){
+      return;
+    }
+    const {x, y, width, height} = this.state.charts[this.curChartId]; 
+    const realX = Math.ceil(x * a);
+    const realY = Math.ceil(y * a);
+    const realWidth = Math.ceil(width * a);
+    const realHeight = Math.ceil(height * a);
+    this.drawThumbRect(realX, realY, realWidth, realHeight, this.thumbEleSelectedRectColor);
+    
   }
   removeThumbRect = () => {
     this.drawThumbRect(x, y, width, height, "white");
   }
   clearThumb = () => {
-    this.drawThumbRect(0, 0, this.thumbCanvasWidth, this.thumbCanvasHeight, "white");
+    this.drawThumbRect(0, 0, this.state.thumbCanvasWidth, this.state.thumbCanvasHeight, "white");
   }
   drawThumbRect = (x, y, width, height, color) => {
     if(!this.thumbEleCtx){
@@ -323,7 +346,12 @@ export default class ChartOperationArea extends React.Component {
     this.thumbEleCtx.fillRect(x, y, width, height);
   }
   clearCurChartRef = () => {
-    this.setChartToolValiable(this.curChartRef, false);
-    this.curChartRef = null;
+    const id = this.curChartId;
+    if(!id){
+      return;
+    }
+    this.setChartToolValiable(this.state.charts[id].ref, false);
+    this.curChartId = 0;
+    this.redrawThumb();
   }
 } 
