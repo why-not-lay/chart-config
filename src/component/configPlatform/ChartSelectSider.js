@@ -1,8 +1,8 @@
 import React from "react";
 //import { Menu, Drawer } from "antd";
-//const { SubMenu } = Menu;
 import { Menu, Layout} from "antd";
 const {Sider} = Layout;
+const { SubMenu } = Menu;
 export default class ChartSelectSider extends React.Component {
   constructor(props){
     super(props);
@@ -11,21 +11,33 @@ export default class ChartSelectSider extends React.Component {
     return (
         <Sider
           collapsible={true}
-          collapsedWidth={0}
+          collapsedWidth={80}
           style={{height: "100%"}}
           >
           <Menu
             mode="inline"
             style={{height: "100%"}}
             >
-            <Menu.Item 
-              key="1"
-              onClick={this.onItemClick}
+            <SubMenu
+              key="charts"
+              title="图表"
               >
-              折线图
-            </Menu.Item>
-            <Menu.Item key="2">柱状图</Menu.Item>
-            <Menu.Item key="3">饼图</Menu.Item>
+              <Menu.Item 
+                key="1"
+                onClick={this.onItemClick}
+                >
+                折线图
+              </Menu.Item>
+              <Menu.Item key="2">柱状图</Menu.Item>
+              <Menu.Item key="3">饼图</Menu.Item>
+            </SubMenu>
+            <SubMenu
+              key="common"
+              title="普通组件"
+              >
+              <Menu.Item key="4">柱状图</Menu.Item>
+              <Menu.Item key="6">饼图</Menu.Item>
+            </SubMenu>
           </Menu>
         </Sider>
     );

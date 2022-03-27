@@ -5,11 +5,12 @@ export default class BaseChartContainer extends React.Component {
     super(props);
     const {id, x, y, width, height} = this.props.config;
     this.state = {
-      id: id,
-      width: width,
-      height: height,
-      x: x,
-      y: y,
+      config: this.props.config,
+      //id: id,
+      //width: width,
+      //height: height,
+      //x: x,
+      //y: y,
       toolVisible: false,
     };
     this.moveable = false;
@@ -21,9 +22,9 @@ export default class BaseChartContainer extends React.Component {
         className="base-chart-container"
         style={{
           position: "absolute",
-          width: `${this.state.width}px`,
-          height: `${this.state.height}px`,
-          transform: `translate(${this.state.x}px, ${this.state.y}px)`,
+          width: `${this.state.config.width}px`,
+          height: `${this.state.config.height}px`,
+          transform: `translate(${this.state.config.x}px, ${this.state.config.y}px)`,
           zIndex: `${this.state.toolVisible ? 1 : 0}`,
           background: "yellow",
         }}
@@ -46,7 +47,7 @@ export default class BaseChartContainer extends React.Component {
    * event handler
    * */
   clickHandler = (e) => {
-    this.props.onSetCurChartRef(this.state.id);
+    this.props.onSetCurChartRef(this.state.config.id);
     e.stopPropagation();
   }
   mouseDownHandler = (e) => {
@@ -125,40 +126,48 @@ export default class BaseChartContainer extends React.Component {
    * common
    * */
   containerMoveH = (movementH, scale) => {
-    const height = this.state.height + movementH / scale;
+    const {config} = this.state;
+    const height = config.height + movementH / scale;
     this.setState({
-      height: height,
+      //height: height,
+      config: {...config, height: height},
     },
     () => {
-      this.props.onSetChartContainerRect(this.state.id, this.state.width, this.state.height);
+      this.props.onSetChartContainerRect(config.id, config.width, config.height);
     });
   }
   containerMoveW = (movementW, scale) => {
-    const width = this.state.width + movementW / scale;
+    const {config} = this.state;
+    const width = config.width + movementW / scale;
     this.setState({
-      width: width,
+      //width: width,
+      config: {...config, width: width},
     },
     () => {
-      this.props.onSetChartContainerRect(this.state.id, this.state.width, this.state.height);
+      this.props.onSetChartContainerRect(config.id, config.width, config.height);
     });
   }
   containerMoveX = (movementX, scale) => {
-    const offsetX = this.state.x + movementX / scale;
+    const {config} = this.state;
+    const offsetX = config.x + movementX / scale;
     this.setState({
-      x: offsetX,
+      //x: offsetX,
+      config: {...config, x: offsetX},
     }, 
     () => {
-      this.props.onSetChartContainerPos(this.state.id, this.state.x, this.state.y);
+      this.props.onSetChartContainerPos(config.id, config.x, config.y);
     });
 
   }
   containerMoveY = (movementY, scale) => {
-    const offsetY = this.state.y + movementY / scale;
+    const {config} = this.state;
+    const offsetY = config.y + movementY / scale;
     this.setState({
-      y: offsetY,
+      //y: offsetY,
+      config: {...config, y: offsetY},
     },
     () => {
-      this.props.onSetChartContainerPos(this.state.id, this.state.x, this.state.y);
+      this.props.onSetChartContainerPos(config.id, config.x, config.y);
     });
   }
 }
