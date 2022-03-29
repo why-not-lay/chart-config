@@ -45,13 +45,14 @@ export default class ChartOperationArea extends React.Component {
       return (
         <BaseChartContainer 
           key={key}
-          config={chart}
+          id={key}
+          rect={chart.rect}
+          option={chart.option}
           scale={this.state.scale}
           ref={(ref) => {
             this.state.charts[key].ref = ref;
           }}
           onSetCurChartRef={this.setCurChartRef.bind(this)}
-          onSetChartContainerPos={this.setChartContainerPos.bind(this)}
           onSetChartContainerRect={this.setChartContainerRect.bind(this)}
           />
       );
@@ -161,7 +162,7 @@ export default class ChartOperationArea extends React.Component {
     this.initEditSider(this.state.scale);
   }
   canvasClickHandler = (e) => {
-    this.props.onSetConfigSider(true);
+    this.props.onSetConfigSider(false);
     this.clearCurChartRef();
     e.stopPropagation();
   }
@@ -203,17 +204,16 @@ export default class ChartOperationArea extends React.Component {
   /*
    * setter
    * */
-  setChartContainerRect = (id, width, height) => {
-    const chart = this.state.charts[id];
-    chart.width = width;
-    chart.height = height;
-    this.redrawThumb();
-  }
-  setChartContainerPos = (id, x, y) => {
-    const chart = this.state.charts[id];
-    chart.x = x;
-    chart.y = y;
-    this.redrawThumb();
+  setChartContainerRect = (id, x, y, width, height) => {
+    const data = {
+      newRect: {
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+      }
+    };
+    this.setChart(id, data);
   }
   setChartToolValiable = (ref, valiable) => {
     if(ref){
@@ -228,6 +228,7 @@ export default class ChartOperationArea extends React.Component {
     }
     this.curChartId = id;
     this.setChartToolValiable(this.state.charts[id].ref, true);
+    this.props.onSetConfigSider(true);
     this.redrawThumb();
   }
   setViewScopeEle = (ele) => {
@@ -310,11 +311,30 @@ export default class ChartOperationArea extends React.Component {
       this.redrawThumb();
     });
   }
+  setChart = (id, data) => {
+    const {newRect, newOption} = data;
+    if(!newRect && !newOption){
+      return;
+    }
+    const newCharts = {...this.state.charts};
+    if(newRect){
+      newCharts[id].rect = newRect;
+    }
+    if(newOption){
+      newCharts[id].option = newOption;
+    }
+    this.setState({
+      charts: newCharts,
+    },
+    () => {
+      this.redrawThumb();
+    });
+  }
   redrawThumb = () => {
     this.clearThumb();
     const a = this.scrollTimes / this.scrollLen;
     Object.keys(this.state.charts).forEach((key) => {
-      const {x, y, width, height} = this.state.charts[key]; 
+      const {x, y, width, height} = this.state.charts[key].rect; 
       const realX = Math.ceil(x * a);
       const realY = Math.ceil(y * a);
       const realWidth = Math.ceil(width * a);
@@ -324,7 +344,7 @@ export default class ChartOperationArea extends React.Component {
     if(!this.curChartId){
       return;
     }
-    const {x, y, width, height} = this.state.charts[this.curChartId]; 
+    const {x, y, width, height} = this.state.charts[this.curChartId].rect; 
     const realX = Math.ceil(x * a);
     const realY = Math.ceil(y * a);
     const realWidth = Math.ceil(width * a);

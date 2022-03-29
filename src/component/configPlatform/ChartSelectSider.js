@@ -49,11 +49,16 @@ export default class ChartSelectSider extends React.Component {
   createChart = () => {
     const chart = {
       id: Date.now(),
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 300,
       ref: null,
+      rect: {
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 300,
+      },
+      option: {
+
+      },
     };
     return chart;
   }
