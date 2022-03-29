@@ -1,6 +1,7 @@
 import React from "react";
 import { Slider, InputNumber, Row, Col } from "antd";
 import BaseChartContainer from "../chart/BaseChartContainer";
+import ChartConfigSider from "./ChartConfigSider";
 import "../../style/chartOperationArea.css";
 export default class ChartOperationArea extends React.Component {
   constructor(props){
@@ -21,7 +22,6 @@ export default class ChartOperationArea extends React.Component {
     this.viewScopeEle = null;
     this.thumbEle = null;
     this.thumbEleCtx = null;
-    //this.curChartRef = null;
     this.curChartId = 0;
     this.thumbEleRectColor = "yellow";
     this.thumbEleSelectedRectColor = "green";
@@ -152,6 +152,9 @@ export default class ChartOperationArea extends React.Component {
             </Col>
           </Row>
         </div>
+        <ChartConfigSider 
+          ref={this.setChartConfigSiderRef}
+          />
       </div>
     );
   }
@@ -162,12 +165,12 @@ export default class ChartOperationArea extends React.Component {
     this.initEditSider(this.state.scale);
   }
   canvasClickHandler = (e) => {
-    this.props.onSetConfigSider(false);
+    this.setConfigSider(false);
     this.clearCurChartRef();
     e.stopPropagation();
   }
   containerClickHandler = (e) => {
-    this.props.onSetConfigSider(false);
+    this.setConfigSider(false);
     this.clearCurChartRef();
     e.stopPropagation();
   }
@@ -204,6 +207,14 @@ export default class ChartOperationArea extends React.Component {
   /*
    * setter
    * */
+  setConfigSider = (isOpen) => {
+    if(this.chartConfigSiderRef){
+      this.chartConfigSiderRef.setConfigSider(isOpen);
+    }
+  }
+  setChartConfigSiderRef = (ref) => {
+    this.chartConfigSiderRef = ref;
+  }
   setChartContainerRect = (id, x, y, width, height) => {
     const data = {
       newRect: {
@@ -228,7 +239,8 @@ export default class ChartOperationArea extends React.Component {
     }
     this.curChartId = id;
     this.setChartToolValiable(this.state.charts[id].ref, true);
-    this.props.onSetConfigSider(true);
+    //this.props.onSetConfigSider(true);
+    this.setConfigSider(true);
     this.redrawThumb();
   }
   setViewScopeEle = (ele) => {
