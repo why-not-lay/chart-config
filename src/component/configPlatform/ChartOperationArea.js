@@ -16,13 +16,15 @@ export default class ChartOperationArea extends React.Component {
       thumbSelectHeight: 0,
       thumbSelectShiftX: 0,
       thumbSelectShiftY: 0,
+      curRect: null,
+      curOption: null,
+      curChartId: 0,
       charts: {},
     }
 
     this.viewScopeEle = null;
     this.thumbEle = null;
     this.thumbEleCtx = null;
-    this.curChartId = 0;
     this.thumbEleRectColor = "yellow";
     this.thumbEleSelectedRectColor = "green";
     this.scrollLen = 24;
@@ -121,8 +123,6 @@ export default class ChartOperationArea extends React.Component {
               width: `${this.state.thumbSelectWidth}px`,
               height: `${this.state.thumbSelectHeight}px`,
               transform: `translate(${this.state.thumbSelectShiftX}px, ${this.state.thumbSelectShiftY}px)`,
-              //left: `${this.state.thumbSelectShiftX}px`,
-              //top: `${this.state.thumbSelectShiftY}px`,
             }}
             onMouseDown={this.thumbSelectMouseDownHandler}
             onMouseUp={this.thumbSelectMouseUpHandler}
@@ -153,7 +153,11 @@ export default class ChartOperationArea extends React.Component {
           </Row>
         </div>
         <ChartConfigSider 
+          id={this.state.curChartId}
+          curRect={this.state.curRect}
+          curOption={this.state.curOption}
           ref={this.setChartConfigSiderRef}
+          onSetChartContainerRect={this.setChartContainerRect}
           />
       </div>
     );
@@ -233,15 +237,20 @@ export default class ChartOperationArea extends React.Component {
     }
   }
   setCurChartRef = (id) => {
-    const curId = this.curChartId;
+    const curId = this.state.curChartId;
     if(curId){
       this.setChartToolValiable(this.state.charts[curId].ref, false);
     }
-    this.curChartId = id;
-    this.setChartToolValiable(this.state.charts[id].ref, true);
-    //this.props.onSetConfigSider(true);
-    this.setConfigSider(true);
-    this.redrawThumb();
+    this.setState({
+      curChartId: id,
+      curRect: this.state.charts[id].rect,
+      curOption: this.state.charts[id].option,
+    }, 
+    () => {
+      this.setChartToolValiable(this.state.charts[id].ref, true);
+      this.setConfigSider(true);
+      this.redrawThumb();
+    });
   }
   setViewScopeEle = (ele) => {
     this.viewScopeEle = ele;
@@ -324,19 +333,25 @@ export default class ChartOperationArea extends React.Component {
     });
   }
   setChart = (id, data) => {
-    const {newRect, newOption} = data;
+    let {newRect, newOption} = data;
     if(!newRect && !newOption){
       return;
     }
     const newCharts = {...this.state.charts};
     if(newRect){
       newCharts[id].rect = newRect;
+    } else {
+      newRect = newCharts[id].rect;
     }
     if(newOption){
       newCharts[id].option = newOption;
+    } else {
+      newOption = newCharts[id].option;
     }
     this.setState({
       charts: newCharts,
+      curRect: newRect,
+      curOption: newOption,
     },
     () => {
       this.redrawThumb();
@@ -353,10 +368,10 @@ export default class ChartOperationArea extends React.Component {
       const realHeight = Math.ceil(height * a);
       this.drawThumbRect(realX, realY, realWidth, realHeight, this.thumbEleRectColor);
     });
-    if(!this.curChartId){
+    if(!this.state.curChartId){
       return;
     }
-    const {x, y, width, height} = this.state.charts[this.curChartId].rect; 
+    const {x, y, width, height} = this.state.charts[this.state.curChartId].rect; 
     const realX = Math.ceil(x * a);
     const realY = Math.ceil(y * a);
     const realWidth = Math.ceil(width * a);
@@ -378,12 +393,18 @@ export default class ChartOperationArea extends React.Component {
     this.thumbEleCtx.fillRect(x, y, width, height);
   }
   clearCurChartRef = () => {
-    const id = this.curChartId;
+    const id = this.state.curChartId;
     if(!id){
       return;
     }
     this.setChartToolValiable(this.state.charts[id].ref, false);
-    this.curChartId = 0;
-    this.redrawThumb();
+    this.setState({
+      curChartId: 0,
+      curRect: null,
+      curOption: null,
+    },
+    () => {
+      this.redrawThumb();
+    });
   }
 } 

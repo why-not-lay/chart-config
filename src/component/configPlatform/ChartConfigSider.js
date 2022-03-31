@@ -36,14 +36,52 @@ export default class ChartConfigSider extends React.Component {
               <Form.Item
                 label="X"
                 >
-                <InputNumber/>
+                <InputNumber 
+                  value={this.getValue("x")}
+                  onChange={(value) => {this.onValueChange(value, "x")}}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="Y"
+                >
+                <InputNumber 
+                  value={this.getValue("y")}
+                  onChange={(value) => {this.onValueChange(value, "y")}}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="width"
+                >
+                <InputNumber 
+                  value={this.getValue("width")}
+                  onChange={(value) => {this.onValueChange(value, "width")}}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="height"
+                >
+                <InputNumber 
+                  value={this.getValue("height")}
+                  onChange={(value) => {this.onValueChange(value, "height")}}
+                  />
               </Form.Item>
             </Form>
           </Panel>
           <Panel header="图表配置">
           </Panel>
+          <Panel header="数据配置">
+          </Panel>
         </Collapse>
       </Drawer>
     );
+  }
+  getValue = (key) => {
+    return this.props.curRect ? this.props.curRect[key] : 0
+  }
+  onValueChange = (value, key) => {
+    const newObj = {...this.props.curRect}
+    newObj[key] = value;
+    const {x, y, width, height} = newObj;
+    this.props.onSetChartContainerRect(this.props.id, x, y, width, height);
   }
 }
