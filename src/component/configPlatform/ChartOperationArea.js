@@ -158,6 +158,7 @@ export default class ChartOperationArea extends React.Component {
           curOption={this.state.curOption}
           ref={this.setChartConfigSiderRef}
           onSetChartContainerRect={this.setChartContainerRect}
+          onSetChartOption={this.setChartOption}
           />
       </div>
     );
@@ -219,6 +220,37 @@ export default class ChartOperationArea extends React.Component {
   setChartConfigSiderRef = (ref) => {
     this.chartConfigSiderRef = ref;
   }
+  setChart = (id, data) => {
+    let {newRect, newOption} = data;
+    if(!newRect && !newOption){
+      return;
+    }
+    const newCharts = {...this.state.charts};
+    if(newRect){
+      newCharts[id].rect = newRect;
+    } else {
+      newRect = newCharts[id].rect;
+    }
+    if(newOption){
+      newCharts[id].option = newOption;
+    } else {
+      newOption = newCharts[id].option;
+    }
+    this.setState({
+      charts: newCharts,
+      curRect: newRect,
+      curOption: newOption,
+    },
+    () => {
+      this.redrawThumb();
+      this.state.charts[id].ref.updateChart();
+    });
+  }
+  setChartOption = (id, newOption) => {
+    this.setChart(id, {
+      newOption: newOption
+    });
+  }
   setChartContainerRect = (id, x, y, width, height) => {
     const data = {
       newRect: {
@@ -230,6 +262,7 @@ export default class ChartOperationArea extends React.Component {
     };
     this.setChart(id, data);
   }
+  
   setChartToolValiable = (ref, valiable) => {
     if(ref){
       ref.setToolVisible(valiable);
@@ -327,31 +360,6 @@ export default class ChartOperationArea extends React.Component {
     const {id} = chart;
     this.setState({
       charts: {...this.state.charts, [id]: chart},
-    },
-    () => {
-      this.redrawThumb();
-    });
-  }
-  setChart = (id, data) => {
-    let {newRect, newOption} = data;
-    if(!newRect && !newOption){
-      return;
-    }
-    const newCharts = {...this.state.charts};
-    if(newRect){
-      newCharts[id].rect = newRect;
-    } else {
-      newRect = newCharts[id].rect;
-    }
-    if(newOption){
-      newCharts[id].option = newOption;
-    } else {
-      newOption = newCharts[id].option;
-    }
-    this.setState({
-      charts: newCharts,
-      curRect: newRect,
-      curOption: newOption,
     },
     () => {
       this.redrawThumb();

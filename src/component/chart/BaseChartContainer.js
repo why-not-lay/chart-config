@@ -1,16 +1,30 @@
 import React from "react";
+import * as echarts from "echarts";
 import BaseChartToolComponent from "./BaseChartToolComponent";
 export default class BaseChartContainer extends React.Component {
   constructor(props){
     super(props);
-    //const {id, x, y, width, height} = this.props.config;
     this.state = {
-      //config: {...this.props.config},
-      //option: {},
       toolVisible: false,
     };
     this.moveable = false;
     this.containerEle = null;
+    this.chartEle = null;
+    this.chartInstance = null;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for(const entry of entries){
+        this.containerResizeHandler();
+      }
+    });
+  }
+  componentDidMount(){
+    this.chartInstance = echarts.init(this.chartEle);
+    this.resizeObserver.observe(this.chartEle);
+    this.chartInstance.setOption(this.props.option);
+  }
+  componentWillUnmount(){
+    this.chartInstance.dispose();
+    this.chartInstance = null;
   }
   shouldComponentUpdate(nextProps, nextState){
     if(!nextProps.rect){
@@ -33,11 +47,18 @@ export default class BaseChartContainer extends React.Component {
           height: `${this.props.rect.height}px`,
           transform: `translate(${this.props.rect.x}px, ${this.props.rect.y}px)`,
           zIndex: `${this.state.toolVisible ? 1 : 0}`,
-          background: "yellow",
         }}
         onClick={this.clickHandler}
         ref={this.setContainerEle}
         >
+        <div
+          style={{
+            position: "relative",
+            height: "100%",
+            width: "100%",
+          }}
+          ref={this.setChartEle}
+          />
         <BaseChartToolComponent 
           visible={this.state.toolVisible}
           scale={this.props.scale}
@@ -53,6 +74,9 @@ export default class BaseChartContainer extends React.Component {
   /*
    * event handler
    * */
+  containerResizeHandler = () => {
+    this.chartInstance.resize();
+  }
   clickHandler = (e) => {
     this.props.onSetCurChartRef(this.props.id);
     e.stopPropagation();
@@ -126,10 +150,16 @@ export default class BaseChartContainer extends React.Component {
   setContainerEle = (ele) => {
     this.containerEle = ele;
   }
+  setChartEle = (ele) => {
+    this.chartEle = ele;
+  }
 
   /*
    * common
    * */
+  updateChart = () => {
+    this.chartInstance.setOption(this.props.option);
+  }
   containerMoveH = (movementH, scale) => {
     const {x, y, width, height} = this.props.rect;
     const newHeight = height + movementH / scale;

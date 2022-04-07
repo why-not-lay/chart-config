@@ -7,6 +7,7 @@ export default class BaseChartToolComponent extends React.Component {
       
     };
     this.eles = {};
+    this.cornerSize = 20;
   }
   render(){
     return (
@@ -17,20 +18,20 @@ export default class BaseChartToolComponent extends React.Component {
           display: `${this.props.visible ? "block" : "none"}`,
           width: "100%",
           height: "100%",
+          top: "0",
+          left: "0",
           border: "1px solid #000",
+          zIndex: "1",
         }}
         >
         <div
           className="base-chart-tool-component-left-top"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            left: `-${5 / this.props.scale}px`,
-            top: `-${5 / this.props.scale}px`,
-            //height: "10px",
-            //left: "-5px",
-            //top: "-5px",
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            left: `-${this.cornerSize / 2 / this.props.scale}px`,
+            top: `-${this.cornerSize / 2 / this.props.scale}px`,
             background: "#000",
             cursor: "nwse-resize",
           }}
@@ -41,14 +42,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-right-top"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            right: `-${5 / this.props.scale}px`,
-            top: `-${5 / this.props.scale}px`,
-            //width: "10px",
-            //height: "10px",
-            //right: "-5px",
-            //top: "-5px",
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            right: `-${this.cornerSize / 2 / this.props.scale}px`,
+            top: `-${this.cornerSize / 2 / this.props.scale}px`,
             background: "#000",
             cursor: "nesw-resize",
           }}
@@ -59,14 +56,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-right-bottom"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            right: `-${5 / this.props.scale}px`,
-            bottom: `-${5 / this.props.scale}px`,
-            //width: "10px",
-            //height: "10px",
-            //right: "-5px",
-            //bottom: "-5px",
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            right: `-${this.cornerSize / 2 / this.props.scale}px`,
+            bottom: `-${this.cornerSize / 2 / this.props.scale}px`,
             background: "#000",
             cursor: "nwse-resize",
           }}
@@ -77,14 +70,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-left-bottom"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            left: `-${5 / this.props.scale}px`,
-            bottom: `-${5 / this.props.scale}px`,
-            //width: "10px",
-            //height: "10px",
-            //left: "-5px",
-            //bottom: "-5px",
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            left: `-${this.cornerSize / 2 / this.props.scale}px`,
+            bottom: `-${this.cornerSize / 2 / this.props.scale}px`,
             background: "#000",
             cursor: "nesw-resize",
           }}
@@ -95,14 +84,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-top"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            top: `-${5 / this.props.scale}px`,
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            top: `-${this.cornerSize / 2 / this.props.scale}px`,
             left: "50%",
-            //width: "10px",
-            //height: "10px",
-            //top: "-5px",
-            //left: "50%",
             transform: "translateX(-50%)",
             background: "#000",
             cursor: "ns-resize",
@@ -114,14 +99,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-right"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            right: `-${5 / this.props.scale}px`,
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            right: `-${this.cornerSize / 2 / this.props.scale}px`,
             top: "50%",
-            //width: "10px",
-            //height: "10px",
-            //right: "-5px",
-            //top: "50%",
             transform: "translateY(-50%)",
             background: "#000",
             cursor: "ew-resize",
@@ -133,14 +114,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-bottom"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            bottom: `-${5 / this.props.scale}px`,
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            bottom: `-${this.cornerSize / 2 / this.props.scale}px`,
             left: "50%",
-            //width: "10px",
-            //height: "10px",
-            //bottom: "-5px",
-            //left: "50%",
             transform: "translateX(-50%)",
             background: "#000",
             cursor: "ns-resize",
@@ -152,14 +129,10 @@ export default class BaseChartToolComponent extends React.Component {
           className="base-chart-tool-component-left"
           style={{
             position: "absolute",
-            width: `${10 / this.props.scale}px`,
-            height: `${10 / this.props.scale}px`,
-            left: `-${5 / this.props.scale}px`,
+            width: `${this.cornerSize / this.props.scale}px`,
+            height: `${this.cornerSize / this.props.scale}px`,
+            left: `-${this.cornerSize / 2 / this.props.scale}px`,
             top: "50%",
-            //width: "10px",
-            //height: "10px",
-            //left: "-5px",
-            //top: "50%",
             transform: "translateY(-50%)",
             background: "#000",
             cursor: "ew-resize",

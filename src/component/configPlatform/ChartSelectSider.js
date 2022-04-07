@@ -1,6 +1,7 @@
 import React from "react";
 //import { Menu, Drawer } from "antd";
 import { Menu, Layout} from "antd";
+import defaultOptinos from "../chart/ChartDefaultOptions";
 const {Sider} = Layout;
 const { SubMenu } = Menu;
 export default class ChartSelectSider extends React.Component {
@@ -24,7 +25,7 @@ export default class ChartSelectSider extends React.Component {
               >
               <Menu.Item 
                 key="1"
-                onClick={this.onItemClick}
+                onClick={(e) => {this.onItemClick(e, "line")}}
                 >
                 折线图
               </Menu.Item>
@@ -42,25 +43,40 @@ export default class ChartSelectSider extends React.Component {
         </Sider>
     );
   }
-  onItemClick = (e) => {
-    const chart = this.createChart();
+  onItemClick = (e, type) => {
+    const chart = this.createChart(type);
     this.props.onAddChart(chart);
   }
-  createChart = () => {
+  createChart = (type) => {
     const chart = {
-      id: Date.now(),
-      ref: null,
+      id: (new Date).getTime(),
       rect: {
         x: 0,
         y: 0,
         width: 300,
         height: 300,
       },
-      option: {
-
-      },
-    };
+      option: this.deepClone(defaultOptinos[type]),
+    }
     return chart;
+  }
+
+  deepClone = (obj) => {
+    let newObj = null;
+    if(typeof(obj) === "object") {
+      newObj = {};
+    }
+    if(obj instanceof Array) {
+      newObj = [];
+    }
+    Object.keys(obj).forEach((key) => {
+      if(typeof(obj[key]) === "object") {
+        newObj[key] = this.deepClone(obj[key]);
+      } else {
+        newObj[key] = obj[key];
+      }
+    });
+    return newObj;
   }
 }
 
