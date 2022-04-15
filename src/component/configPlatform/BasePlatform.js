@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Menu } from "antd";
+import { Row, Col, Layout, Button } from "antd";
 const {Header, Content} = Layout;
 
 import ChartBasePlatform from "./ChartBasePlatform";
@@ -8,23 +8,43 @@ import "../../style/basePlatform.css"
 export default class BasePlatform extends React.Component {
   constructor(props){
     super(props);
+    this.chartBasePlatformRef = null;
   }
   render(){
     return (
       <Layout className="base-platform-container">
         <Header>
-          <Menu
-            theme="dark"
-            mode="horizontal"
+          <Row
+            gutter={16}
             >
-            <Menu.Item key="1">已配置图表</Menu.Item>
-            <Menu.Item key="2">配置平台</Menu.Item>
-          </Menu>
+            <Col
+              offset={22}
+              >
+              <Button
+                type="primary"
+                onClick={(e) => {this.saveCharts()}}
+                >
+                保存
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                >
+                返回
+              </Button>
+            </Col>
+          </Row>
         </Header>
         <Content>
-          <ChartBasePlatform></ChartBasePlatform>
+          <ChartBasePlatform
+            ref={(ref) => {this.chartBasePlatformRef = ref;}}
+            />
         </Content>
       </Layout>
     );
+  }
+  saveCharts = () => {
+    this.chartBasePlatformRef.saveCharts();
   }
 }

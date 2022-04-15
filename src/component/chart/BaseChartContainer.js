@@ -75,7 +75,9 @@ export default class BaseChartContainer extends React.Component {
    * event handler
    * */
   containerResizeHandler = () => {
-    this.chartInstance.resize();
+    if(this.chartInstance) {
+      this.chartInstance.resize();
+    }
   }
   clickHandler = (e) => {
     this.props.onSetCurChartRef(this.props.id);
@@ -161,23 +163,31 @@ export default class BaseChartContainer extends React.Component {
     this.chartInstance.setOption(this.props.option);
   }
   containerMoveH = (movementH, scale) => {
-    const {x, y, width, height} = this.props.rect;
-    const newHeight = height + movementH / scale;
-    this.props.onSetChartContainerRect(this.props.id, x, y, width, newHeight);
+    //const {x, y, width, height} = this.props.rect;
+    const newRect = {...this.props.rect};
+    //const newHeight = height + movementH / scale;
+    newRect.height += movementH / scale;
+    this.props.onSetChartRect(this.props.id, newRect);
   }
   containerMoveW = (movementW, scale) => {
-    const {x, y, width, height} = this.props.rect;
-    const newWidth = width + movementW / scale;
-    this.props.onSetChartContainerRect(this.props.id, x, y, newWidth, height);
+    const newRect = {...this.props.rect};
+    //const {x, y, width, height} = this.props.rect;
+    //const newWidth = width + movementW / scale;
+    newRect.width += movementW / scale;
+    this.props.onSetChartRect(this.props.id, newRect);
   }
   containerMoveX = (movementX, scale) => {
-    const {x, y, width, height} = this.props.rect;
-    const newX = x + movementX / scale;
-    this.props.onSetChartContainerRect(this.props.id, newX, y, width, height);
+    const newRect = {...this.props.rect};
+    //const {x, y, width, height} = this.props.rect;
+    //const newX = x + movementX / scale;
+    newRect.x += movementX / scale;
+    this.props.onSetChartRect(this.props.id, newRect);
   }
   containerMoveY = (movementY, scale) => {
-    const {x, y, width, height} = this.props.rect;
-    const newY = y + movementY / scale;
-    this.props.onSetChartContainerRect(this.props.id, x, newY, width, height);
+    const newRect = {...this.props.rect};
+    //const {x, y, width, height} = this.props.rect;
+    //const newY = y + movementY / scale;
+    newRect.y += movementY / scale;
+    this.props.onSetChartRect(this.props.id, newRect);
   }
 }

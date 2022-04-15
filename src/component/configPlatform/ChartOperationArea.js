@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider, InputNumber, Row, Col } from "antd";
+import { Slider, InputNumber, Row, Col} from "antd";
 import BaseChartContainer from "../chart/BaseChartContainer";
 import ChartConfigSider from "./ChartConfigSider";
 import "../../style/chartOperationArea.css";
@@ -18,10 +18,10 @@ export default class ChartOperationArea extends React.Component {
       thumbSelectShiftY: 0,
       curRect: null,
       curOption: null,
+      curConfig: null,
       curChartId: 0,
       charts: {},
     }
-
     this.viewScopeEle = null;
     this.thumbEle = null;
     this.thumbEleCtx = null;
@@ -34,12 +34,24 @@ export default class ChartOperationArea extends React.Component {
         this.viewScopeResizeHandler();
       }
     });
-
   }
   componentDidMount(){
     if(this.viewScopeEle && this.thumbEle){
       this.initEditSider(this.state.scale);
+      this.clearThumb();
     }
+  }
+  static getDerivedStateFromProps(props, state) {
+    if(!props.initData){
+      return null;
+    }
+    const {width, height, scale, charts} = props.initData;
+    return {
+      width: width,
+      height: height,
+      scale: scale,
+      charts: charts,
+    };
   }
   render(){
     const chartItems = Object.keys(this.state.charts).map((key) => {
@@ -52,10 +64,12 @@ export default class ChartOperationArea extends React.Component {
           option={chart.option}
           scale={this.state.scale}
           ref={(ref) => {
-            this.state.charts[key].ref = ref;
+            if(key in this.state.charts) {
+              this.state.charts[key].ref = ref;
+            }
           }}
           onSetCurChartRef={this.setCurChartRef.bind(this)}
-          onSetChartContainerRect={this.setChartContainerRect.bind(this)}
+          onSetChartRect={this.setChartRect.bind(this)}
           />
       );
     });
@@ -156,9 +170,13 @@ export default class ChartOperationArea extends React.Component {
           id={this.state.curChartId}
           curRect={this.state.curRect}
           curOption={this.state.curOption}
+          curConfig={this.state.curConfig}
           ref={this.setChartConfigSiderRef}
-          onSetChartContainerRect={this.setChartContainerRect}
+          onSetChartRect={this.setChartRect}
           onSetChartOption={this.setChartOption}
+          onSetChartConfig={this.setChartConfig}
+          onRemoveChart={this.removeChart.bind(this)}
+          onClearCurChartRef={this.clearCurChartRef.bind(this)}
           />
       </div>
     );
@@ -221,8 +239,8 @@ export default class ChartOperationArea extends React.Component {
     this.chartConfigSiderRef = ref;
   }
   setChart = (id, data) => {
-    let {newRect, newOption} = data;
-    if(!newRect && !newOption){
+    let {newRect, newOption, newConfig} = data;
+    if(!newRect && !newOption && !newConfig){
       return;
     }
     const newCharts = {...this.state.charts};
@@ -236,14 +254,25 @@ export default class ChartOperationArea extends React.Component {
     } else {
       newOption = newCharts[id].option;
     }
+    if(newConfig){
+      newCharts[id].config = newConfig;
+    } else {
+      newConfig = newCharts[id].config;
+    }
     this.setState({
       charts: newCharts,
       curRect: newRect,
       curOption: newOption,
+      curConfig: newConfig,
     },
     () => {
       this.redrawThumb();
       this.state.charts[id].ref.updateChart();
+    });
+  }
+  setChartConfig = (id, config) => {
+    this.setChart(id, {
+      newConfig: config,
     });
   }
   setChartOption = (id, newOption) => {
@@ -251,16 +280,16 @@ export default class ChartOperationArea extends React.Component {
       newOption: newOption
     });
   }
-  setChartContainerRect = (id, x, y, width, height) => {
-    const data = {
-      newRect: {
-        x: x,
-        y: y,
-        width: width,
-        height: height,
-      }
-    };
-    this.setChart(id, data);
+  setChartRect = (id, newRect) => {
+    //const data = {
+    //  newRect: {
+    //    x: x,
+    //    y: y,
+    //    width: width,
+    //    height: height,
+    //  }
+    //};
+    this.setChart(id, {newRect: newRect});
   }
   
   setChartToolValiable = (ref, valiable) => {
@@ -278,6 +307,7 @@ export default class ChartOperationArea extends React.Component {
       curChartId: id,
       curRect: this.state.charts[id].rect,
       curOption: this.state.charts[id].option,
+      curConfig: this.state.charts[id].config,
     }, 
     () => {
       this.setChartToolValiable(this.state.charts[id].ref, true);
@@ -410,9 +440,49 @@ export default class ChartOperationArea extends React.Component {
       curChartId: 0,
       curRect: null,
       curOption: null,
+      curConfig: null,
     },
     () => {
       this.redrawThumb();
     });
+  }
+  removeChart = (id) => {
+    if(!(id in this.state.charts)){
+      return;
+    }
+    this.setConfigSider(false);
+    this.clearCurChartRef();
+    const newCharts = {...this.state.charts};
+    delete newCharts[id];
+    this.setState({
+      charts: newCharts,
+    });
+  }
+  getChartsData = () => {
+    const data = {};
+    Object.keys(this.state.charts).forEach((key) => {
+      const {id, rect, option, config} = this.state.charts[key];
+      data[key] = {
+        id: id,
+        rect: rect,
+        option: option,
+        config: config,
+      };
+    });
+    return {
+      charts: data,
+      width: 1920,
+      height: 1080,
+      scale: 0.5,
+    };
+  }
+  saveCharts = async () => {
+    await (new Promise((resolve) => {
+      setTimeout((() => {
+        const data = JSON.stringify(this.getChartsData());
+        console.log(data);
+        resolve();
+      }).bind(this), 1000);
+    }));
   }
 } 

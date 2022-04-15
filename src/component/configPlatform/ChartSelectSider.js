@@ -1,9 +1,13 @@
 import React from "react";
 //import { Menu, Drawer } from "antd";
 import { Menu, Layout} from "antd";
+import {
+  LineChartOutlined,
+  BarChartOutlined,
+  PieChartOutlined,
+} from "@ant-design/icons";
 import defaultOptinos from "../chart/ChartDefaultOptions";
 const {Sider} = Layout;
-const { SubMenu } = Menu;
 export default class ChartSelectSider extends React.Component {
   constructor(props){
     super(props);
@@ -11,6 +15,7 @@ export default class ChartSelectSider extends React.Component {
   render(){
     return (
         <Sider
+          theme="light"
           collapsible={true}
           collapsedWidth={80}
           style={{height: "100%"}}
@@ -19,26 +24,33 @@ export default class ChartSelectSider extends React.Component {
             mode="inline"
             style={{height: "100%"}}
             >
-            <SubMenu
-              key="charts"
-              title="图表"
+            <Menu.Item 
+              key="line"
+              icon={<LineChartOutlined />}
+              onClick={(e) => {this.onItemClick(e, "line")}}
               >
-              <Menu.Item 
-                key="1"
-                onClick={(e) => {this.onItemClick(e, "line")}}
-                >
-                折线图
-              </Menu.Item>
-              <Menu.Item key="2">柱状图</Menu.Item>
-              <Menu.Item key="3">饼图</Menu.Item>
-            </SubMenu>
-            <SubMenu
-              key="common"
-              title="普通组件"
+              折线图
+            </Menu.Item>
+            <Menu.Item 
+              key="bar"
+              icon={<BarChartOutlined />}
+              onClick={(e) => {this.onItemClick(e, "bar")}}
               >
-              <Menu.Item key="4">柱状图</Menu.Item>
-              <Menu.Item key="6">饼图</Menu.Item>
-            </SubMenu>
+              柱状图
+            </Menu.Item>
+            <Menu.Item 
+              key="pie"
+              icon={<PieChartOutlined />}
+              onClick={(e) => {this.onItemClick(e, "pie")}}
+              >
+              饼图
+            </Menu.Item>
+            <Menu.Item 
+              key="custom"
+              onClick={(e) => {this.onItemClick(e, "custom")}}
+              >
+              自定义
+            </Menu.Item>
           </Menu>
         </Sider>
     );
@@ -57,6 +69,11 @@ export default class ChartSelectSider extends React.Component {
         height: 300,
       },
       option: this.deepClone(defaultOptinos[type]),
+      config: {
+        dataUrl: "",
+        autoFlash: false,
+        interval: 1,
+      }
     }
     return chart;
   }

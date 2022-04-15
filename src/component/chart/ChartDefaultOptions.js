@@ -7,7 +7,6 @@ export default {
       trigger: "axis",
     },
     xAxis: {
-      type: "category",
     },
     yAxis: {
       type: "value"
@@ -22,7 +21,51 @@ export default {
       }
     ]
   },
+  bar: {
+    title: {
+      text: "柱状图"
+    },
+    tooltip: {
+      trigger: "axis",
+    },
+    xAxis: {
+    },
+    yAxis: {
+      type: "value"
+    },
+    dataset: {
+      source: [],
+    },
+    series: [
+      {
+        type: "bar",
+      }
+    ]
+  },
+  pie: {
+    title: {
+      text: "饼图"
+    },
+    tooltip: {
+      trigger: "item",
+    },
+    dataset: {
+      source: [],
+    },
+    series: [
+      {
+        type: "pie",
+      }
+    ]
+  },
   custom: {
-
+    title: {
+      text: "自定义图表"
+    },
+    dataset: {
+      source: [],
+    },
+    series: [
+    ]
   }
 }

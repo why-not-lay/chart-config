@@ -1,34 +1,40 @@
 import React from "react";
 import ReactJson from "react-json-view";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { 
-  Collapse, 
-  Drawer, 
-  Row, 
-  Col, 
   Form, 
-  Radio,
   Input,
+  Button,
+  Drawer, 
+  Switch,
+  message,
+  Collapse, 
   InputNumber, 
 } from "antd";
 const {Panel} = Collapse;
-const {TextArea, Search} = Input;
+const {Search, TextArea} = Input;
 export default class ChartConfigSider extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       configSiderVisible: false,
       searching: false,
-      dataInput: "input",
+      clipboardText: "",
     };
-    this.onClose = this.onClose.bind(this);
+    //this.onClose = this.onClose.bind(this);
+    this.dataIntervalGetter = -1;
+    this.configInputRef = null;
   }
-  onClose = () => {
-    this.setConfigSider(false);
+  componentDidMount = () => {
+    if(!this.props.curConfig || !this.props.curConfig.autoFlash || !this.props.curConfig.dataUrl) {
+      return;
+    }
+    this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
   }
-  setConfigSider = (isOpen) => {
-    this.setState({
-      configSiderVisible: isOpen,
-    });
+  componentWillUnmount = () => {
+    if(this.dataIntervalGetter !== -1) {
+      clearInterval(this.dataIntervalGetter);
+    }
   }
   render(){
     return(
@@ -45,9 +51,11 @@ export default class ChartConfigSider extends React.Component {
           <Panel header="容器配置">
             <Form
               layout="horizontal"
+              labelCol={{span: 8}}
+              wrapperCol={{span: 16}}
               >
               <Form.Item
-                label="X"
+                label="X坐标"
                 >
                 <InputNumber 
                   step={1}
@@ -56,7 +64,7 @@ export default class ChartConfigSider extends React.Component {
                   />
               </Form.Item>
               <Form.Item
-                label="Y"
+                label="Y坐标"
                 >
                 <InputNumber 
                   step={1}
@@ -65,7 +73,7 @@ export default class ChartConfigSider extends React.Component {
                   />
               </Form.Item>
               <Form.Item
-                label="width"
+                label="宽度"
                 >
                 <InputNumber 
                   step={1}
@@ -74,7 +82,7 @@ export default class ChartConfigSider extends React.Component {
                   />
               </Form.Item>
               <Form.Item
-                label="height"
+                label="长度"
                 >
                 <InputNumber 
                   step={1}
@@ -82,14 +90,51 @@ export default class ChartConfigSider extends React.Component {
                   onChange={(value) => {this.onValueChange(value, "height")}}
                   />
               </Form.Item>
+              <Button 
+                block
+                type="primary" 
+                onClick={this.onRemoveClick}
+                >
+                删除图表容器
+              </Button>
             </Form>
           </Panel>
           <Panel header="数据配置">
-            <Search
-              enterButton="获取"
-              onSearch={this.setData}
-              loading={this.state.searching}
-              />
+            <Form
+              layout="horizontal"
+              labelCol={{span: 8}}
+              wrapperCol={{span: 16}}
+              >
+              <Form.Item
+                label="是否动态刷新"
+                >
+                <Switch
+                  checked={this.props.curConfig ? this.props.curConfig.autoFlash : false}
+                  onChange={this.onSwitchChange}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="刷新间隔"
+                >
+                <InputNumber
+                  disabled={!this.props.curConfig || !this.props.curConfig.autoFlash}
+                  min={1}
+                  step={1}
+                  value={this.props.curConfig ? this.props.curConfig.interval : 0}
+                  onChange={this.onIntervalChange}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="数据链接"
+                >
+                <Search
+                  enterButton="获取"
+                  defaultValue={this.props.curConfig ? this.props.curConfig.dataUrl: ""}
+                  onSearch={this.setData}
+                  loading={this.state.searching}
+                  />
+              </Form.Item>
+            </Form>
           </Panel>
           <Panel header="图表配置">
             <ReactJson 
@@ -103,11 +148,145 @@ export default class ChartConfigSider extends React.Component {
               onDelete={this.onOptionDelete}
               />
           </Panel>
+          <Panel header="导入配置">
+            <TextArea
+              allowClear
+              autoSize={{
+                minRows: 5,
+                maxRows: 10,
+              }}
+              placeholder="请以 JSON 格式输入图表配置"
+              ref={this.setConfigInputRef}
+              />
+            <Button 
+              type="primary" 
+              block
+              onClick={this.onConfigInputClick.bind(this)}
+              >
+              确定
+            </Button>
+          </Panel>
+          <Panel header="导出配置">
+            <Form>
+              <Form.Item>
+                <CopyToClipboard
+                  text={this.state.clipboardText}
+                  >
+                  <Button 
+                    block
+                    type="primary" 
+                    onClick={this.onRectExportClick}
+                    >
+                    导出容器配置
+                  </Button>
+                </CopyToClipboard>
+              </Form.Item>
+              <Form.Item>
+                <CopyToClipboard
+                  text={this.state.clipboardText}
+                  >
+                  <Button 
+                    block
+                    type="primary" 
+                    onClick={this.onConfigExportClick}
+                    >
+                    导出数据配置
+                  </Button>
+                </CopyToClipboard>
+              </Form.Item>
+              <Form.Item>
+                <CopyToClipboard
+                  text={this.state.clipboardText}
+                  >
+                  <Button 
+                    block
+                    type="primary" 
+                    onClick={this.onOptionExportClick}
+                    >
+                    导出图表配置
+                  </Button>
+                </CopyToClipboard>
+              </Form.Item>
+              <Form.Item>
+                <CopyToClipboard
+                  text={this.state.clipboardText}
+                  >
+                  <Button 
+                    block
+                    type="primary" 
+                    onClick={this.onAllExportClick}
+                    >
+                    导出所有配置
+                  </Button>
+                </CopyToClipboard>
+              </Form.Item>
+            </Form>
+          </Panel>
         </Collapse>
       </Drawer>
     );
   }
-
+  /*
+   * event handler
+   * */
+  onRectExportClick = (e) => {
+    this.exportData(this.props.curRect);
+  }
+  onOptionExportClick = (e) => {
+    this.exportData(this.props.curOption);
+  }
+  onConfigExportClick = (e) => {
+    this.exportData(this.props.curConfig);
+  }
+  onAllExportClick = (e) => {
+    this.exportData({
+      rect: this.props.curRect,
+      option: this.props.curOption,
+      config: this.props.curConfig,
+    });
+  }
+  onConfigInputClick = (e) => {
+    const value = this.configInputRef.resizableTextArea.textArea.value;
+    try {
+      const obj = JSON.parse(value);
+      this.resetChart(obj);
+    } catch (e) {
+      message.error("JSON 格式有误，请重新输入");
+    }
+  }
+  onRemoveClick = (e) => {
+    this.props.onRemoveChart(this.props.id)
+  }
+  onClose = () => {
+    this.setConfigSider(false);
+    this.props.onClearCurChartRef();
+  }
+  setConfigSider = (isOpen) => {
+    this.setState({
+      configSiderVisible: isOpen,
+    });
+  }
+  onIntervalChange = (value) => {
+    value = Math.floor(value);
+    value = value < 1 ? 1 : value;
+    const newObj = {...this.props.curConfig};
+    newObj.interval = value;
+    this.props.onSetChartConfig(this.props.id, newObj);
+    if(this.props.curConfig.autoFlash){
+      this.setDataInterval(this.props.curConfig.dataUrl, value);
+    }
+  }
+  onSwitchChange = (value) => {
+    console.log(value)
+    const newObj = {...this.props.curConfig}
+    newObj.autoFlash = value;
+    this.props.onSetChartConfig(this.props.id, newObj);
+    if(value){
+      this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
+    } else if(this.dataIntervalGetter !== -1) {
+      clearInterval(this.dataIntervalGetter);
+    }
+  }
   onOptionDelete = (e) => {
     const {name, namespace, existing_src} = e;
     const newObj = this.locateValue(existing_src, namespace);
@@ -130,24 +309,23 @@ export default class ChartConfigSider extends React.Component {
     value = Math.floor(value);
     const newObj = {...this.props.curRect}
     newObj[key] = value;
-    const {x, y, width, height} = newObj;
-    this.props.onSetChartContainerRect(this.props.id, x, y, width, height);
+    //const {x, y, width, height} = newObj;
+    this.props.onSetChartRect(this.props.id, newObj);
   }
   getValue = (key) => {
     return this.props.curRect ? this.props.curRect[key] : 0
   }
   getData = async(url) => {
-    console.log(url);
-    this.setState({
-      searching: true,
-    });
-    const data = []
+    const data = [
+      ['product', '2015', '2016', '2017'],
+      ['Matcha Latte', 43.3, 85.8, 93.7],
+      ['Milk Tea', 83.1, 73.4, 55.1],
+      ['Cheese Cocoa', 86.4, 65.2, 82.5],
+      ['Walnut Brownie', 72.4, 53.9, 39.1],
+    ]
     await new Promise((resolve) => {
       setTimeout(()=>{console.log("getting data"), resolve(1)}, 3000);
     });
-    /*
-     * 获取数据
-     * */
     return data;
   }
   locateValue = (rawObj, path) => {
@@ -166,21 +344,70 @@ export default class ChartConfigSider extends React.Component {
     return newOption;
   }
   setData = async (value) => {
-    const data = await this.getData(value);
-    /*
-     * 格式化数据
-     * */
-    const newData = [
-      ['product', '2015', '2016', '2017'],
-      ['Matcha Latte', 43.3, 85.8, 93.7],
-      ['Milk Tea', 83.1, 73.4, 55.1],
-      ['Cheese Cocoa', 86.4, 65.2, 82.5],
-      ['Walnut Brownie', 72.4, 53.9, 39.1],
-    ]
+    if(!value) {
+      message.error("数据链接不能为空");
+      return;
+    }
+    this.setState({
+      searching: true,
+    });
+    await this.fetchData(value)
     this.setState({
       searching: false,
     });
-    const newOption = this.mergeData(newData)
+    const newObj = {...this.props.curConfig};
+    newObj.dataUrl = value;
+    this.props.onSetChartConfig(this.props.id, newObj);
+    if(this.props.curConfig.autoFlash) {
+      this.setDataInterval(value, this.props.curConfig.interval);
+    }
+  }
+  fetchData = async (url) => {
+    console.log(url);
+    let data = [];
+    try {
+      data = await this.getData(url);
+    } catch (e) {
+      /* handle error */
+    }
+    const newOption = this.mergeData(data)
     this.props.onSetChartOption(this.props.id, newOption);
+  }
+  setDataInterval = (url, delay) => {
+    if(this.dataIntervalGetter !== -1) {
+      clearInterval(this.dataIntervalGetter);
+    }
+    this.dataIntervalGetter = setInterval(this.fetchData.bind(this), delay * 1000, url);
+  }
+  setConfigInputRef = (ref) => {
+    this.configInputRef = ref;
+  }
+  resetChart = (obj) => {
+    const {rect, option, config} = obj;
+    if(rect){
+      const newRect = {...this.props.curRect};
+      Object.assign(newRect, rect);
+      console.log(newRect);
+      this.props.onSetChartRect(this.props.id, newRect);
+    }
+    if(option){
+      const newOption = {...this.props.curOption};
+      Object.assign(newOption, option);
+      console.log(newOption);
+      this.props.onSetChartOption(this.props.id, newOption);
+    }
+    if(config){
+      const newConfig = {...this.props.curConfig};
+      Object.assign(newConfig, config);
+      console.log(newConfig);
+      this.props.onSetChartConfig(this.props.id, newConfig);
+    }
+  }
+  exportData = (obj) => {
+    const text = JSON.stringify(obj);
+    this.setState({
+      clipboardText: text,
+    });
+    message.info("配置已经复制");
   }
 }
