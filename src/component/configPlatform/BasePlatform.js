@@ -22,7 +22,7 @@ export default class BasePlatform extends React.Component {
               >
               <Button
                 type="primary"
-                onClick={(e) => {this.saveCharts()}}
+                onClick={(e) => {this.saveInstances()}}
                 >
                 保存
               </Button>
@@ -44,7 +44,7 @@ export default class BasePlatform extends React.Component {
       </Layout>
     );
   }
-  saveCharts = () => {
-    this.chartBasePlatformRef.saveCharts();
+  saveInstances = () => {
+    this.chartBasePlatformRef.saveInstances();
   }
 }

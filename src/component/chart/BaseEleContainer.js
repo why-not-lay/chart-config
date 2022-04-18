@@ -1,7 +1,6 @@
 import React from "react";
-import * as echarts from "echarts";
 import BaseChartToolComponent from "./BaseChartToolComponent";
-export default class BaseChartContainer extends React.Component {
+export default class BaseEleContainer extends React.Component {
   constructor(props){
     super(props);
     this.state = {
@@ -9,30 +8,32 @@ export default class BaseChartContainer extends React.Component {
     };
     this.moveable = false;
     this.containerEle = null;
-    this.chartEle = null;
-    this.chartInstance = null;
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for(const entry of entries){
-        this.containerResizeHandler();
-      }
-    });
+    //this.chartEle = null;
+    this.ele = null;
+    //this.chartInstance = null;
+    //this.resizeObserver = new ResizeObserver((entries) => {
+    //  for(const entry of entries){
+    //    this.containerResizeHandler();
+    //  }
+    //});
   }
-  componentDidMount(){
-    this.chartInstance = echarts.init(this.chartEle);
-    this.resizeObserver.observe(this.chartEle);
-    this.chartInstance.setOption(this.props.option);
-  }
-  componentWillUnmount(){
-    this.chartInstance.dispose();
-    this.chartInstance = null;
-  }
+  //componentDidMount(){
+  //  //this.chartInstance = echarts.init(this.chartEle);
+  //  //this.resizeObserver.observe(this.chartEle);
+  //  //this.chartInstance.setOption(this.props.option);
+  //}
+  //componentWillUnmount(){
+  //  this.chartInstance.dispose();
+  //  this.chartInstance = null;
+  //}
   shouldComponentUpdate(nextProps, nextState){
     if(!nextProps.rect){
       return true;
     }
     const {x, y, width, height} = nextProps.rect;
     const {x:pX, y:pY, width:pW, height:pH} = this.props.rect;
-    return !(nextProps.option === this.props.option) 
+    return !(nextProps.style === this.props.style) 
+            || !(nextProps.innerHtml === this.state.innerHtml)
             || !(nextState.toolVisible === this.state.toolVisible)
             || !(x === pX && y === pY && width === pW && height === pH);
     
@@ -40,7 +41,7 @@ export default class BaseChartContainer extends React.Component {
   render(){
     return (
       <div
-        className="base-chart-container"
+        className="base-ele-container"
         style={{
           position: "absolute",
           width: `${this.props.rect.width}px`,
@@ -152,34 +153,34 @@ export default class BaseChartContainer extends React.Component {
   setContainerEle = (ele) => {
     this.containerEle = ele;
   }
-  setChartEle = (ele) => {
-    this.chartEle = ele;
+  setEle = (ele) => {
+    this.ele = ele;
   }
 
   /*
    * common
    * */
-  updateChart = () => {
-    this.chartInstance.setOption(this.props.option);
-  }
+  //updateChart = () => {
+  //  this.chartInstance.setOption(this.props.option);
+  //}
   containerMoveH = (movementH, scale) => {
     const newRect = {...this.props.rect};
     newRect.height += movementH / scale;
-    this.props.onSetChartRect(this.props.id, newRect);
+    this.props.onSetInstanceRect(this.props.id, newRect);
   }
   containerMoveW = (movementW, scale) => {
     const newRect = {...this.props.rect};
     newRect.width += movementW / scale;
-    this.props.onSetChartRect(this.props.id, newRect);
+    this.props.onSetInstanceRect(this.props.id, newRect);
   }
   containerMoveX = (movementX, scale) => {
     const newRect = {...this.props.rect};
     newRect.x += movementX / scale;
-    this.props.onSetChartRect(this.props.id, newRect);
+    this.props.onSetInstanceRect(this.props.id, newRect);
   }
   containerMoveY = (movementY, scale) => {
     const newRect = {...this.props.rect};
     newRect.y += movementY / scale;
-    this.props.onSetChartRect(this.props.id, newRect);
+    this.props.onSetInstanceRect(this.props.id, newRect);
   }
 }

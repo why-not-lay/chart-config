@@ -16,11 +16,15 @@ export default class ChartOperationArea extends React.Component {
       thumbSelectHeight: 0,
       thumbSelectShiftX: 0,
       thumbSelectShiftY: 0,
+      curInstanceId: 0,
       curRect: null,
-      curOption: null,
-      curConfig: null,
-      curChartId: 0,
+      curType: "",
+      curOption: null, // only for chart
+      curConfig: null, // only for chart
+      curStyle: null, // only for ele
+      curInnerHtml: null, // only for ele
       charts: {},
+      eles: {},
     }
     this.viewScopeEle = null;
     this.thumbEle = null;
@@ -38,20 +42,26 @@ export default class ChartOperationArea extends React.Component {
   componentDidMount(){
     if(this.viewScopeEle && this.thumbEle){
       this.initEditSider(this.state.scale);
-      this.clearThumb();
     }
-  }
-  static getDerivedStateFromProps(props, state) {
-    if(!props.initData){
-      return null;
-    }
-    const {width, height, scale, charts} = props.initData;
-    return {
-      width: width,
-      height: height,
-      scale: scale,
-      charts: charts,
-    };
+    (this.fetchInstancesData()).then((data) => {
+      const {scale, width, height, eles, charts} = data;
+      Object.keys(charts).forEach((key) => {
+        const {autoFlash, dataUrl, interval} = charts[key].config;
+        if(autoFlash && dataUrl){
+          const intervalID = setInterval(() => {
+            console.log("getter");
+          }, interval * 1000);
+          charts[key].config.intervalID = intervalID;
+        }
+      });
+      this.setState({
+        scale: scale,
+        width: width,
+        height: height,
+        eles: eles,
+        charts: charts,
+      });
+    });
   }
   render(){
     const chartItems = Object.keys(this.state.charts).map((key) => {
@@ -68,8 +78,8 @@ export default class ChartOperationArea extends React.Component {
               this.state.charts[key].ref = ref;
             }
           }}
-          onSetCurChartRef={this.setCurChartRef.bind(this)}
-          onSetChartRect={this.setChartRect.bind(this)}
+          onSetCurChartRef={this.setCurInstanceRef.bind(this)}
+          onSetChartRect={this.setInstanceRect.bind(this)}
           />
       );
     });
@@ -167,16 +177,20 @@ export default class ChartOperationArea extends React.Component {
           </Row>
         </div>
         <ChartConfigSider 
-          id={this.state.curChartId}
+          id={this.state.curInstanceId}
+          type={this.state.curType}
           curRect={this.state.curRect}
           curOption={this.state.curOption}
           curConfig={this.state.curConfig}
+          curStyle={this.state.curStyle}
+          curInnerHtml={this.state.curInnerHtml}
           ref={this.setChartConfigSiderRef}
-          onSetChartRect={this.setChartRect}
+          onSetInstanceRect={this.setInstanceRect}
           onSetChartOption={this.setChartOption}
           onSetChartConfig={this.setChartConfig}
-          onRemoveChart={this.removeChart.bind(this)}
-          onClearCurChartRef={this.clearCurChartRef.bind(this)}
+          onRemoveInstance={this.removeInstance.bind(this)}
+          onSetIntervalGetter={this.setIntervalGetter}
+          onClearCurChartRef={this.clearCurInstanceRef.bind(this)}
           />
       </div>
     );
@@ -189,12 +203,14 @@ export default class ChartOperationArea extends React.Component {
   }
   canvasClickHandler = (e) => {
     this.setConfigSider(false);
-    this.clearCurChartRef();
+    //this.clearCurChartRef();
+    this.clearCurInstanceRef();
     e.stopPropagation();
   }
   containerClickHandler = (e) => {
     this.setConfigSider(false);
-    this.clearCurChartRef();
+    //this.clearCurChartRef();
+    this.clearCurInstanceRef();
     e.stopPropagation();
   }
   thumbSelectMouseMoveHandler = (e) => {
@@ -230,6 +246,34 @@ export default class ChartOperationArea extends React.Component {
   /*
    * setter
    * */
+  setIntervalGetter = (id) => {
+    if(!(id in this.state.charts)){
+      return;
+    }
+    const config = this.state.charts[id].config
+    this.closeIntervalGetter(id);
+    if(!config.autoFlash || config.dataUrl === ""){
+      return;
+    }
+    const intervalID = setInterval(() => {
+      console.log("getter");
+    }, config.interval * 1000);
+    const newConfig = {...config};
+    newConfig.intervalID = intervalID;
+    this.setChartConfig(id, newConfig)
+  }
+  closeIntervalGetter = (id) => {
+    if(!(id in this.state.charts)){
+      return;
+    }
+    const config = this.state.charts[id].config
+    if(config.intervalID !== -1){
+      clearInterval(config.intervalID);
+    }
+    const newConfig = {...config};
+    newConfig.intervalID = -1;
+    this.setChartConfig(id, newConfig);
+  }
   setConfigSider = (isOpen) => {
     if(this.chartConfigSiderRef){
       this.chartConfigSiderRef.setConfigSider(isOpen);
@@ -280,7 +324,7 @@ export default class ChartOperationArea extends React.Component {
       newOption: newOption
     });
   }
-  setChartRect = (id, newRect) => {
+  setInstanceRect = (id, newRect) => {
     //const data = {
     //  newRect: {
     //    x: x,
@@ -289,7 +333,11 @@ export default class ChartOperationArea extends React.Component {
     //    height: height,
     //  }
     //};
-    this.setChart(id, {newRect: newRect});
+    if(this.state.curType === "chart"){
+      this.setChart(id, {newRect: newRect});
+    } else if (this.state.curType === "ele"){
+
+    }
   }
   
   setChartToolValiable = (ref, valiable) => {
@@ -298,19 +346,45 @@ export default class ChartOperationArea extends React.Component {
       ref.setMoveable(valiable);
     }
   }
-  setCurChartRef = (id) => {
-    const curId = this.state.curChartId;
+  setCurInstanceRef = (id) => {
+    const curId = this.state.curInstanceId;
+    const curInstances = this.state.curType === "chart" ? this.state.charts : this.state.eles;
     if(curId){
-      this.setChartToolValiable(this.state.charts[curId].ref, false);
+      this.setChartToolValiable(curInstances[curId].ref, false);
+    }
+    let type = "", 
+        rect = null, 
+        option = null, 
+        config = null,
+        style = null,
+        innerHtml = null,
+        selectInstances = null;
+    if(id in this.state.charts){
+      selectInstances = this.state.charts;
+      type = "chart";
+      rect = selectInstances[id].rect;
+      option = selectInstances[id].option;
+      config = selectInstances[id].config;
+    } else if(id in this.state.eles){
+      selectInstances = this.state.eles;
+      type = "ele";
+      rect = selectInstances[id].rect;
+      style = selectInstances[id].style;
+      innerHtml = selectInstances[id].innerHtml;
+    } else{
+      throw Error(`no such id: ${id}`)
     }
     this.setState({
-      curChartId: id,
-      curRect: this.state.charts[id].rect,
-      curOption: this.state.charts[id].option,
-      curConfig: this.state.charts[id].config,
+      curInstanceId: id,
+      curType: type,
+      curRect: rect,
+      curOption: option,
+      curConfig: config,
+      curStyle: style,
+      curInnerHtml: innerHtml,
     }, 
     () => {
-      this.setChartToolValiable(this.state.charts[id].ref, true);
+      this.setChartToolValiable(selectInstances[id].ref, true);
       this.setConfigSider(true);
       this.redrawThumb();
     });
@@ -346,6 +420,9 @@ export default class ChartOperationArea extends React.Component {
       thumbSelectHeight: thumbSelectHeight,
       thumbSelectShiftX: 0,
       thumbSelectShiftY: 0,
+    },
+    () => {
+      this.redrawThumb();
     });
     this.viewScopeEle.scrollTo(0,0);
   }
@@ -386,6 +463,15 @@ export default class ChartOperationArea extends React.Component {
       });
     }
   }
+  addEle = (ele) => {
+    const {id} = ele;
+    this.setState({
+      eles: {...this.state.eles, [id]: ele},
+    },
+    () => {
+      this.redrawThumb();
+    });
+  }
   addChart = (chart) => {
     const {id} = chart;
     this.setState({
@@ -406,10 +492,19 @@ export default class ChartOperationArea extends React.Component {
       const realHeight = Math.ceil(height * a);
       this.drawThumbRect(realX, realY, realWidth, realHeight, this.thumbEleRectColor);
     });
-    if(!this.state.curChartId){
+    Object.keys(this.state.eles).forEach((key) => {
+      const {x, y, width, height} = this.state.eles[key].rect; 
+      const realX = Math.ceil(x * a);
+      const realY = Math.ceil(y * a);
+      const realWidth = Math.ceil(width * a);
+      const realHeight = Math.ceil(height * a);
+      this.drawThumbRect(realX, realY, realWidth, realHeight, this.thumbEleRectColor);
+    });
+    if(!this.state.curInstanceId){
       return;
     }
-    const {x, y, width, height} = this.state.charts[this.state.curChartId].rect; 
+    //const {x, y, width, height} = this.state.charts[this.state.curInstanceId].rect; 
+    const {x, y, width, height} = this.state.curRect;
     const realX = Math.ceil(x * a);
     const realY = Math.ceil(y * a);
     const realWidth = Math.ceil(width * a);
@@ -430,59 +525,124 @@ export default class ChartOperationArea extends React.Component {
     this.thumbEleCtx.fillStyle = color;
     this.thumbEleCtx.fillRect(x, y, width, height);
   }
-  clearCurChartRef = () => {
-    const id = this.state.curChartId;
+  //clearCurChartRef = () => {
+  //  const id = this.state.curInstanceId;
+  //  if(!id){
+  //    return;
+  //  }
+  //  this.setChartToolValiable(this.state.charts[id].ref, false);
+  //  this.setState({
+  //    curInstanceId: 0,
+  //    curRect: null,
+  //    curType: "",
+  //    curOption: null,
+  //    curConfig: null,
+  //    curStyle: null,
+  //    curInnerHtml: null,
+  //  },
+  //  () => {
+  //    this.redrawThumb();
+  //  });
+  //}
+  clearCurInstanceRef = () => {
+    const id = this.state.curInstanceId;
     if(!id){
       return;
     }
-    this.setChartToolValiable(this.state.charts[id].ref, false);
+    const instances = this.state.curType === "chart" ? this.state.charts : this.state.eles;
+    this.setChartToolValiable(instances[id].ref, false);
     this.setState({
-      curChartId: 0,
+      curInstanceId: 0,
       curRect: null,
+      curType: "",
       curOption: null,
       curConfig: null,
+      curStyle: null,
+      curInnerHtml: null,
     },
     () => {
       this.redrawThumb();
     });
   }
-  removeChart = (id) => {
-    if(!(id in this.state.charts)){
+  //removeChart = (id) => {
+  //  if(!(id in this.state.charts)){
+  //    return;
+  //  }
+  //  this.setConfigSider(false);
+  //  this.clearCurChartRef();
+  //  const newCharts = {...this.state.charts};
+  //  delete newCharts[id];
+  //  this.setState({
+  //    charts: newCharts,
+  //  });
+  //}
+  removeInstance = (id) => {
+    if(!(["chart", "ele"].includes(this.state.curType))){
+      return;
+    }
+    const instances = this.state.curType === "chart" ? this.state.charts : this.state.eles;
+    if(!(id in instances)){
       return;
     }
     this.setConfigSider(false);
-    this.clearCurChartRef();
+    //this.clearCurChartRef();
+    this.clearCurInstanceRef();
     const newCharts = {...this.state.charts};
     delete newCharts[id];
     this.setState({
       charts: newCharts,
     });
   }
-  getChartsData = () => {
-    const data = {};
+  getInstancesData = () => {
+    const charts = {};
+    const eles = {};
     Object.keys(this.state.charts).forEach((key) => {
-      const {id, rect, option, config} = this.state.charts[key];
-      data[key] = {
+      const {id, type, rect, option, config} = this.state.charts[key];
+      const obj = {...option}
+      obj.dataset.source = [];
+      charts[key] = {
         id: id,
+        type: type,
         rect: rect,
-        option: option,
+        option: obj,
         config: config,
       };
     });
+    Object.keys(this.state.eles).forEach((key) => {
+      const {id, type, rect, style, innerHtml} = this.state.eles[key];
+      eles[key] = {
+        id: id,
+        type: type,
+        rect: rect,
+        style: style,
+        innerHtml: innerHtml,
+      };
+    });
     return {
-      charts: data,
+      eles: eles,
+      charts: charts,
       width: 1920,
       height: 1080,
       scale: 0.5,
     };
   }
-  saveCharts = async () => {
+  saveInstances = async () => {
     await (new Promise((resolve) => {
       setTimeout((() => {
-        const data = JSON.stringify(this.getChartsData());
+        const data = JSON.stringify(this.getInstancesData());
         console.log(data);
         resolve();
       }).bind(this), 1000);
     }));
+  }
+  fetchInstancesData = async () => {
+    await (new Promise((resolve) => {
+      setTimeout((() => {
+        resolve();
+      }).bind(this), 1000);
+    }));
+    //const data = '{"charts":{"1650010299780":{"id":1650010299780,"rect":{"x":0,"y":0,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"","autoFlash":false,"interval":1}}},"width":1920,"height":1080,"scale":0.5}';
+    const data = '{"eles":{},"charts":{"1650251650999":{"id":1650251650999,"type":"chart","rect":{"x":330,"y":18,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"efef","autoFlash":true,"interval":10,"intervalID":-1}},"1650251723272":{"id":1650251723272,"type":"chart","rect":{"x":206,"y":412,"width":300,"height":300},"option":{"title":{"text":"柱状图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"bar"}]},"config":{"dataUrl":"","autoFlash":true,"interval":1,"intervalID":-1}},"1650251728473":{"id":1650251728473,"type":"chart","rect":{"x":16,"y":48,"width":300,"height":300},"option":{"title":{"text":"饼图"},"tooltip":{"trigger":"item"},"dataset":{"source":[]},"series":[{"type":"pie"}]},"config":{"dataUrl":"","autoFlash":false,"interval":1,"intervalID":-1}}},"width":1920,"height":1080,"scale":0.5}';
+    return JSON.parse(data);
   }
 } 

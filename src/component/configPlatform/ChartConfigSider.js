@@ -22,21 +22,189 @@ export default class ChartConfigSider extends React.Component {
       clipboardText: "",
     };
     //this.onClose = this.onClose.bind(this);
-    this.dataIntervalGetter = -1;
+    //this.dataIntervalGetter = -1;
     this.configInputRef = null;
   }
   componentDidMount = () => {
     if(!this.props.curConfig || !this.props.curConfig.autoFlash || !this.props.curConfig.dataUrl) {
       return;
     }
-    this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
+    //this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
   }
   componentWillUnmount = () => {
-    if(this.dataIntervalGetter !== -1) {
-      clearInterval(this.dataIntervalGetter);
-    }
+    //if(this.dataIntervalGetter !== -1) {
+    //  clearInterval(this.dataIntervalGetter);
+    //}
   }
   render(){
+    const styleConfig = (
+          <Panel header="样式配置">
+            <TextArea
+              allowClear
+              autoSize={{
+                minRows: 5,
+                maxRows: 10,
+              }}
+              />
+            <Button 
+              type="primary" 
+              block
+              >
+              确定
+            </Button>
+          </Panel>
+    );
+    const innerHtmlConfig = (
+          <Panel header="元素配置">
+            <TextArea
+              allowClear
+              autoSize={{
+                minRows: 5,
+                maxRows: 10,
+              }}
+              />
+            <Button 
+              type="primary" 
+              block
+              >
+              确定
+            </Button>
+          </Panel>
+    );
+    const dataConfig = (
+          <Panel header="数据配置">
+            <Form
+              layout="horizontal"
+              labelCol={{span: 8}}
+              wrapperCol={{span: 16}}
+              >
+              <Form.Item
+                label="是否动态刷新"
+                >
+                <Switch
+                  checked={this.props.curConfig ? this.props.curConfig.autoFlash : false}
+                  onChange={this.onSwitchChange}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="刷新间隔"
+                >
+                <InputNumber
+                  disabled={!this.props.curConfig || !this.props.curConfig.autoFlash}
+                  min={1}
+                  step={1}
+                  value={this.props.curConfig ? this.props.curConfig.interval : 0}
+                  onChange={this.onIntervalChange}
+                  />
+              </Form.Item>
+              <Form.Item
+                label="数据链接"
+                >
+                <Search
+                  enterButton="获取"
+                  key={this.props.id}
+                  defaultValue={this.props.curConfig ? this.props.curConfig.dataUrl: ""}
+                  onSearch={this.setData}
+                  loading={this.state.searching}
+                  />
+              </Form.Item>
+            </Form>
+          </Panel>
+    );
+    const optionConfig = (
+          <Panel header="图表配置">
+            <ReactJson 
+              name="option"
+              collapsed={true}
+              displayDataTypes={false}
+              displayObjectSize={false}
+              src={{...this.props.curOption}}
+              onEdit={this.onOptionEdit}
+              onAdd={this.onOptionAdd}
+              onDelete={this.onOptionDelete}
+              />
+          </Panel>
+    );
+    const optionInputConfig = (
+          <Panel header="导入配置">
+            <TextArea
+              allowClear
+              autoSize={{
+                minRows: 5,
+                maxRows: 10,
+              }}
+              placeholder="请以 JSON 格式输入图表配置"
+              ref={this.setConfigInputRef}
+              />
+            <Button 
+              type="primary" 
+              block
+              onClick={this.onConfigInputClick.bind(this)}
+              >
+              确定
+            </Button>
+          </Panel>
+    );
+    const innerHtmlExportConfig = (
+          <Form.Item>
+            <CopyToClipboard
+              text={this.state.clipboardText}
+              >
+              <Button 
+                block
+                type="primary" 
+                >
+                导出元素配置
+              </Button>
+            </CopyToClipboard>
+          </Form.Item>
+    );
+    const styleExportConfig = (
+          <Form.Item>
+            <CopyToClipboard
+              text={this.state.clipboardText}
+              >
+              <Button 
+                block
+                type="primary" 
+                onClick={this.onConfigExportClick}
+                >
+                导出样式配置
+              </Button>
+            </CopyToClipboard>
+          </Form.Item>
+    );
+    const dataExportConfig = (
+          <Form.Item>
+            <CopyToClipboard
+              text={this.state.clipboardText}
+              >
+              <Button 
+                block
+                type="primary" 
+                onClick={this.onConfigExportClick}
+                >
+                导出数据配置
+              </Button>
+            </CopyToClipboard>
+          </Form.Item>
+    );
+    const optionExportConfig = (
+          <Form.Item>
+            <CopyToClipboard
+              text={this.state.clipboardText}
+              >
+              <Button 
+                block
+                type="primary" 
+                onClick={this.onOptionExportClick}
+                >
+                导出图表配置
+              </Button>
+            </CopyToClipboard>
+          </Form.Item>
+
+    );
     return(
       <Drawer 
         title="配置栏" 
@@ -99,73 +267,11 @@ export default class ChartConfigSider extends React.Component {
               </Button>
             </Form>
           </Panel>
-          <Panel header="数据配置">
-            <Form
-              layout="horizontal"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-              >
-              <Form.Item
-                label="是否动态刷新"
-                >
-                <Switch
-                  checked={this.props.curConfig ? this.props.curConfig.autoFlash : false}
-                  onChange={this.onSwitchChange}
-                  />
-              </Form.Item>
-              <Form.Item
-                label="刷新间隔"
-                >
-                <InputNumber
-                  disabled={!this.props.curConfig || !this.props.curConfig.autoFlash}
-                  min={1}
-                  step={1}
-                  value={this.props.curConfig ? this.props.curConfig.interval : 0}
-                  onChange={this.onIntervalChange}
-                  />
-              </Form.Item>
-              <Form.Item
-                label="数据链接"
-                >
-                <Search
-                  enterButton="获取"
-                  defaultValue={this.props.curConfig ? this.props.curConfig.dataUrl: ""}
-                  onSearch={this.setData}
-                  loading={this.state.searching}
-                  />
-              </Form.Item>
-            </Form>
-          </Panel>
-          <Panel header="图表配置">
-            <ReactJson 
-              name="option"
-              collapsed={true}
-              displayDataTypes={false}
-              displayObjectSize={false}
-              src={{...this.props.curOption}}
-              onEdit={this.onOptionEdit}
-              onAdd={this.onOptionAdd}
-              onDelete={this.onOptionDelete}
-              />
-          </Panel>
-          <Panel header="导入配置">
-            <TextArea
-              allowClear
-              autoSize={{
-                minRows: 5,
-                maxRows: 10,
-              }}
-              placeholder="请以 JSON 格式输入图表配置"
-              ref={this.setConfigInputRef}
-              />
-            <Button 
-              type="primary" 
-              block
-              onClick={this.onConfigInputClick.bind(this)}
-              >
-              确定
-            </Button>
-          </Panel>
+          {this.props.curConfig ? dataConfig : null}
+          {this.props.curOption ? optionConfig : null}
+          {this.props.curOption ? optionInputConfig : null}
+          {this.props.curInnerHtml ? innerHtmlConfig : null}
+          {this.props.curStyle ? styleConfig : null}
           <Panel header="导出配置">
             <Form>
               <Form.Item>
@@ -181,32 +287,10 @@ export default class ChartConfigSider extends React.Component {
                   </Button>
                 </CopyToClipboard>
               </Form.Item>
-              <Form.Item>
-                <CopyToClipboard
-                  text={this.state.clipboardText}
-                  >
-                  <Button 
-                    block
-                    type="primary" 
-                    onClick={this.onConfigExportClick}
-                    >
-                    导出数据配置
-                  </Button>
-                </CopyToClipboard>
-              </Form.Item>
-              <Form.Item>
-                <CopyToClipboard
-                  text={this.state.clipboardText}
-                  >
-                  <Button 
-                    block
-                    type="primary" 
-                    onClick={this.onOptionExportClick}
-                    >
-                    导出图表配置
-                  </Button>
-                </CopyToClipboard>
-              </Form.Item>
+              {this.props.curConfig ? dataExportConfig : null}
+              {this.props.curOption ? optionExportConfig : null}
+              {this.props.curInnerHtml ? innerHtmlExportConfig : null}
+              {this.props.curStyle ? styleExportConfig : null}
               <Form.Item>
                 <CopyToClipboard
                   text={this.state.clipboardText}
@@ -255,7 +339,7 @@ export default class ChartConfigSider extends React.Component {
     }
   }
   onRemoveClick = (e) => {
-    this.props.onRemoveChart(this.props.id)
+    this.props.onRemoveInstance(this.props.id)
   }
   onClose = () => {
     this.setConfigSider(false);
@@ -273,7 +357,7 @@ export default class ChartConfigSider extends React.Component {
     newObj.interval = value;
     this.props.onSetChartConfig(this.props.id, newObj);
     if(this.props.curConfig.autoFlash){
-      this.setDataInterval(this.props.curConfig.dataUrl, value);
+      this.props.onSetIntervalGetter(this.props.id);
     }
   }
   onSwitchChange = (value) => {
@@ -281,11 +365,7 @@ export default class ChartConfigSider extends React.Component {
     const newObj = {...this.props.curConfig}
     newObj.autoFlash = value;
     this.props.onSetChartConfig(this.props.id, newObj);
-    if(value){
-      this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
-    } else if(this.dataIntervalGetter !== -1) {
-      clearInterval(this.dataIntervalGetter);
-    }
+    this.props.onSetIntervalGetter(this.props.id);
   }
   onOptionDelete = (e) => {
     const {name, namespace, existing_src} = e;
@@ -359,7 +439,7 @@ export default class ChartConfigSider extends React.Component {
     newObj.dataUrl = value;
     this.props.onSetChartConfig(this.props.id, newObj);
     if(this.props.curConfig.autoFlash) {
-      this.setDataInterval(value, this.props.curConfig.interval);
+      this.props.onSetIntervalGetter(this.props.id);
     }
   }
   fetchData = async (url) => {
@@ -372,12 +452,6 @@ export default class ChartConfigSider extends React.Component {
     }
     const newOption = this.mergeData(data)
     this.props.onSetChartOption(this.props.id, newOption);
-  }
-  setDataInterval = (url, delay) => {
-    if(this.dataIntervalGetter !== -1) {
-      clearInterval(this.dataIntervalGetter);
-    }
-    this.dataIntervalGetter = setInterval(this.fetchData.bind(this), delay * 1000, url);
   }
   setConfigInputRef = (ref) => {
     this.configInputRef = ref;
