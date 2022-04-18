@@ -21,37 +21,27 @@ export default class ChartConfigSider extends React.Component {
       searching: false,
       clipboardText: "",
     };
-    //this.onClose = this.onClose.bind(this);
-    //this.dataIntervalGetter = -1;
     this.configInputRef = null;
+    this.configInnerHtmlRef = null;
   }
   componentDidMount = () => {
     if(!this.props.curConfig || !this.props.curConfig.autoFlash || !this.props.curConfig.dataUrl) {
       return;
     }
-    //this.setDataInterval(this.props.curConfig.dataUrl, this.props.curConfig.interval);
-  }
-  componentWillUnmount = () => {
-    //if(this.dataIntervalGetter !== -1) {
-    //  clearInterval(this.dataIntervalGetter);
-    //}
   }
   render(){
     const styleConfig = (
           <Panel header="样式配置">
-            <TextArea
-              allowClear
-              autoSize={{
-                minRows: 5,
-                maxRows: 10,
-              }}
+            <ReactJson 
+              name="style"
+              collapsed={true}
+              displayDataTypes={false}
+              displayObjectSize={false}
+              src={{...this.props.curStyle}}
+              onEdit={this.onStyleEdit}
+              onAdd={this.onStyleAdd}
+              onDelete={this.onStyleDelete}
               />
-            <Button 
-              type="primary" 
-              block
-              >
-              确定
-            </Button>
           </Panel>
     );
     const innerHtmlConfig = (
@@ -62,10 +52,14 @@ export default class ChartConfigSider extends React.Component {
                 minRows: 5,
                 maxRows: 10,
               }}
+              key={`${this.props.id}-innerHtml`}
+              defaultValue={this.props.curInnerHtml}
+              ref={this.setConfigInnerHtmlRef}
               />
             <Button 
               type="primary" 
               block
+              onClick={this.onConfigInnerHtmlClick.bind(this)}
               >
               确定
             </Button>
@@ -102,7 +96,7 @@ export default class ChartConfigSider extends React.Component {
                 >
                 <Search
                   enterButton="获取"
-                  key={this.props.id}
+                  key={`${this.props.id}-dataUrl`}
                   defaultValue={this.props.curConfig ? this.props.curConfig.dataUrl: ""}
                   onSearch={this.setData}
                   loading={this.state.searching}
@@ -153,6 +147,7 @@ export default class ChartConfigSider extends React.Component {
               <Button 
                 block
                 type="primary" 
+                onClick={this.onInnerHtmlExportClick}
                 >
                 导出元素配置
               </Button>
@@ -167,7 +162,7 @@ export default class ChartConfigSider extends React.Component {
               <Button 
                 block
                 type="primary" 
-                onClick={this.onConfigExportClick}
+                onClick={this.onStyleExportClick}
                 >
                 导出样式配置
               </Button>
@@ -270,8 +265,7 @@ export default class ChartConfigSider extends React.Component {
           {this.props.curConfig ? dataConfig : null}
           {this.props.curOption ? optionConfig : null}
           {this.props.curOption ? optionInputConfig : null}
-          {this.props.curInnerHtml ? innerHtmlConfig : null}
-          {this.props.curStyle ? styleConfig : null}
+          {this.props.curInnerHtml !== null ? innerHtmlConfig : null}
           <Panel header="导出配置">
             <Form>
               <Form.Item>
@@ -289,8 +283,7 @@ export default class ChartConfigSider extends React.Component {
               </Form.Item>
               {this.props.curConfig ? dataExportConfig : null}
               {this.props.curOption ? optionExportConfig : null}
-              {this.props.curInnerHtml ? innerHtmlExportConfig : null}
-              {this.props.curStyle ? styleExportConfig : null}
+              {this.props.curInnerHtml !== null ? innerHtmlExportConfig : null}
               <Form.Item>
                 <CopyToClipboard
                   text={this.state.clipboardText}
@@ -313,6 +306,12 @@ export default class ChartConfigSider extends React.Component {
   /*
    * event handler
    * */
+  onInnerHtmlExportClick = (e) => {
+    this.exportData(this.props.curInnerHtml);
+  }
+  onStyleExportClick = (e) => {
+    this.exportData(this.props.curStyle);
+  }
   onRectExportClick = (e) => {
     this.exportData(this.props.curRect);
   }
@@ -323,11 +322,21 @@ export default class ChartConfigSider extends React.Component {
     this.exportData(this.props.curConfig);
   }
   onAllExportClick = (e) => {
-    this.exportData({
+    const data = {
       rect: this.props.curRect,
-      option: this.props.curOption,
-      config: this.props.curConfig,
-    });
+    }
+    if(this.props.type === "chart"){
+      data.option = this.props.curOption;
+      data.config = this.props.curConfig;
+    } else if(this.props.type === "ele"){
+      data.style = this.props.curStyle;
+      data.innerHtml = this.props.curInnerHtml;
+    }
+    this.exportData(data);
+  }
+  onConfigInnerHtmlClick = (e) => {
+    const value = this.configInnerHtmlRef.resizableTextArea.textArea.value;
+    this.props.onSetEleInnerHtml(this.props.id, value);
   }
   onConfigInputClick = (e) => {
     const value = this.configInputRef.resizableTextArea.textArea.value;
@@ -367,6 +376,32 @@ export default class ChartConfigSider extends React.Component {
     this.props.onSetChartConfig(this.props.id, newObj);
     this.props.onSetIntervalGetter(this.props.id);
   }
+  onStyleDelete = (e) => {
+    const {name, namespace, existing_src} = e;
+    const newObj = this.locateValue(existing_src, namespace);
+    delete newObj[name];
+    this.props.onSetEleStyle(this.props.id, existing_src);
+  }
+  onStyleAdd = (e) => {
+    const {name, namespace, existing_src, new_value} = e;
+    if(name === null){
+      this.props.onSetEleStyle(this.props.id, new_value);
+      return;
+    }
+    const newObj = this.locateValue(existing_src, namespace);
+    newObj[name] = new_value;
+    this.props.onSetEleStyle(this.props.id, existing_src);
+  }
+  onStyleEdit = (e) => {
+    const {name, namespace, existing_src, new_value} = e;
+    if(typeof(new_value) !== "string"){
+      message.error("样式值应为字符串");
+      return;
+    }
+    const newObj = this.locateValue(existing_src, namespace);
+    newObj[name] = new_value;
+    this.props.onSetEleStyle(this.props.id, existing_src);
+  }
   onOptionDelete = (e) => {
     const {name, namespace, existing_src} = e;
     const newObj = this.locateValue(existing_src, namespace);
@@ -375,6 +410,10 @@ export default class ChartConfigSider extends React.Component {
   }
   onOptionAdd = (e) => {
     const {name, namespace, existing_src, new_value} = e;
+    if(name === null){
+      this.props.onSetEleStyle(this.props.id, new_value);
+      return;
+    }
     const newObj = this.locateValue(existing_src, namespace);
     newObj[name] = new_value;
     this.props.onSetChartOption(this.props.id, existing_src);
@@ -455,6 +494,9 @@ export default class ChartConfigSider extends React.Component {
   }
   setConfigInputRef = (ref) => {
     this.configInputRef = ref;
+  }
+  setConfigInnerHtmlRef = (ref) => {
+    this.configInnerHtmlRef = ref;
   }
   resetChart = (obj) => {
     const {rect, option, config} = obj;

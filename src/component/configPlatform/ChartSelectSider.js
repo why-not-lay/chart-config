@@ -48,7 +48,7 @@ export default class ChartSelectSider extends React.Component {
             </Menu.Item>
             <Menu.Item 
               key="custom-ele"
-              onClick={(e) => {this.onChartItemClick(e, "custom")}}
+              onClick={(e) => {this.onEleItemClick(e)}}
               >
               自定义元素
             </Menu.Item>
@@ -94,7 +94,7 @@ export default class ChartSelectSider extends React.Component {
       };
     } else if(instanceType === "ele"){
       instance.style = {};
-      instance.innerHtml = {};
+      instance.innerHtml = "<div>自定义元素</div>";
     }
     return instance;
   }

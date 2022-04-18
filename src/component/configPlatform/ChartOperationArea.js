@@ -1,6 +1,7 @@
 import React from "react";
 import { Slider, InputNumber, Row, Col} from "antd";
 import BaseChartContainer from "../chart/BaseChartContainer";
+import BaseEleContainer from "../chart/BaseEleContainer";
 import ChartConfigSider from "./ChartConfigSider";
 import "../../style/chartOperationArea.css";
 export default class ChartOperationArea extends React.Component {
@@ -43,6 +44,7 @@ export default class ChartOperationArea extends React.Component {
     if(this.viewScopeEle && this.thumbEle){
       this.initEditSider(this.state.scale);
     }
+    return;
     (this.fetchInstancesData()).then((data) => {
       const {scale, width, height, eles, charts} = data;
       Object.keys(charts).forEach((key) => {
@@ -83,6 +85,26 @@ export default class ChartOperationArea extends React.Component {
           />
       );
     });
+    const eleItems = Object.keys(this.state.eles).map((key) => {
+      const ele = this.state.eles[key];
+      return (
+        <BaseEleContainer 
+          key={key}
+          id={key}
+          rect={ele.rect}
+          innerHtml={ele.innerHtml}
+          style={ele.style}
+          scale={this.state.scale}
+          ref={(ref) => {
+            if(key in this.state.eles) {
+              this.state.eles[key].ref = ref;
+            }
+          }}
+          onSetCurEleRef={this.setCurInstanceRef.bind(this)}
+          onSetEleRect={this.setInstanceRect.bind(this)}
+          />
+      );
+    });
     return(
       <div
         className="chart-operation-area-outer-container"
@@ -117,6 +139,7 @@ export default class ChartOperationArea extends React.Component {
             onClick={this.canvasClickHandler}
             >
             {chartItems}
+            {eleItems}
           </div>
         </div>
         <div
@@ -188,6 +211,8 @@ export default class ChartOperationArea extends React.Component {
           onSetInstanceRect={this.setInstanceRect}
           onSetChartOption={this.setChartOption}
           onSetChartConfig={this.setChartConfig}
+          onSetEleStyle={this.setEleStyle}
+          onSetEleInnerHtml={this.setEleInnerHtml}
           onRemoveInstance={this.removeInstance.bind(this)}
           onSetIntervalGetter={this.setIntervalGetter}
           onClearCurChartRef={this.clearCurInstanceRef.bind(this)}
@@ -282,6 +307,37 @@ export default class ChartOperationArea extends React.Component {
   setChartConfigSiderRef = (ref) => {
     this.chartConfigSiderRef = ref;
   }
+  setEle = (id, data) => {
+    let {newRect, newInnerHtml, newStyle} = data;
+    if(!newRect && isNaN(newInnerHtml) && !newStyle){
+      return;
+    }
+    const newEles = {...this.state.eles};
+    if(newRect){
+      newEles[id].rect = newRect;
+    } else {
+      newRect = newEles[id].rect;
+    }
+    if(!isNaN(newInnerHtml)){
+      newEles[id].innerHtml = newInnerHtml;
+    } else {
+      newInnerHtml = newEles[id].innerHtml;
+    }
+    if(newStyle){
+      newEles[id].style = newStyle;
+    } else {
+      newStyle = newEles[id].style;
+    }
+    this.setState({
+      eles: newEles,
+      curRect: newRect,
+      curInnerHtml: newInnerHtml,
+      curStyle: newStyle,
+    },
+    () => {
+      this.redrawThumb();
+    });
+  }
   setChart = (id, data) => {
     let {newRect, newOption, newConfig} = data;
     if(!newRect && !newOption && !newConfig){
@@ -314,6 +370,16 @@ export default class ChartOperationArea extends React.Component {
       this.state.charts[id].ref.updateChart();
     });
   }
+  setEleInnerHtml = (id, innerHtml) => {
+    this.setEle(id, {
+      newInnerHtml: innerHtml,
+    });
+  }
+  setEleStyle = (id, style) => {
+    this.setEle(id, {
+      newStyle: style,
+    });
+  }
   setChartConfig = (id, config) => {
     this.setChart(id, {
       newConfig: config,
@@ -324,19 +390,11 @@ export default class ChartOperationArea extends React.Component {
       newOption: newOption
     });
   }
-  setInstanceRect = (id, newRect) => {
-    //const data = {
-    //  newRect: {
-    //    x: x,
-    //    y: y,
-    //    width: width,
-    //    height: height,
-    //  }
-    //};
+  setInstanceRect = (id, rect) => {
     if(this.state.curType === "chart"){
-      this.setChart(id, {newRect: newRect});
+      this.setChart(id, {newRect: rect});
     } else if (this.state.curType === "ele"){
-
+      this.setEle(id, {newRect: rect});
     }
   }
   
@@ -503,7 +561,6 @@ export default class ChartOperationArea extends React.Component {
     if(!this.state.curInstanceId){
       return;
     }
-    //const {x, y, width, height} = this.state.charts[this.state.curInstanceId].rect; 
     const {x, y, width, height} = this.state.curRect;
     const realX = Math.ceil(x * a);
     const realY = Math.ceil(y * a);
@@ -525,25 +582,6 @@ export default class ChartOperationArea extends React.Component {
     this.thumbEleCtx.fillStyle = color;
     this.thumbEleCtx.fillRect(x, y, width, height);
   }
-  //clearCurChartRef = () => {
-  //  const id = this.state.curInstanceId;
-  //  if(!id){
-  //    return;
-  //  }
-  //  this.setChartToolValiable(this.state.charts[id].ref, false);
-  //  this.setState({
-  //    curInstanceId: 0,
-  //    curRect: null,
-  //    curType: "",
-  //    curOption: null,
-  //    curConfig: null,
-  //    curStyle: null,
-  //    curInnerHtml: null,
-  //  },
-  //  () => {
-  //    this.redrawThumb();
-  //  });
-  //}
   clearCurInstanceRef = () => {
     const id = this.state.curInstanceId;
     if(!id){
@@ -564,18 +602,6 @@ export default class ChartOperationArea extends React.Component {
       this.redrawThumb();
     });
   }
-  //removeChart = (id) => {
-  //  if(!(id in this.state.charts)){
-  //    return;
-  //  }
-  //  this.setConfigSider(false);
-  //  this.clearCurChartRef();
-  //  const newCharts = {...this.state.charts};
-  //  delete newCharts[id];
-  //  this.setState({
-  //    charts: newCharts,
-  //  });
-  //}
   removeInstance = (id) => {
     if(!(["chart", "ele"].includes(this.state.curType))){
       return;
@@ -585,13 +611,18 @@ export default class ChartOperationArea extends React.Component {
       return;
     }
     this.setConfigSider(false);
-    //this.clearCurChartRef();
     this.clearCurInstanceRef();
-    const newCharts = {...this.state.charts};
-    delete newCharts[id];
-    this.setState({
-      charts: newCharts,
-    });
+    const newInstances = {...instances};
+    delete newInstances[id];
+    if(this.state.curType === "chart"){
+      this.setState({
+        charts: newInstances,
+      });
+    } else if(this.state.curType === "ele"){
+      this.setState({
+        eles: newInstances,
+      });
+    }
   }
   getInstancesData = () => {
     const charts = {};
@@ -641,7 +672,6 @@ export default class ChartOperationArea extends React.Component {
         resolve();
       }).bind(this), 1000);
     }));
-    //const data = '{"charts":{"1650010299780":{"id":1650010299780,"rect":{"x":0,"y":0,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"","autoFlash":false,"interval":1}}},"width":1920,"height":1080,"scale":0.5}';
     const data = '{"eles":{},"charts":{"1650251650999":{"id":1650251650999,"type":"chart","rect":{"x":330,"y":18,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"efef","autoFlash":true,"interval":10,"intervalID":-1}},"1650251723272":{"id":1650251723272,"type":"chart","rect":{"x":206,"y":412,"width":300,"height":300},"option":{"title":{"text":"柱状图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"bar"}]},"config":{"dataUrl":"","autoFlash":true,"interval":1,"intervalID":-1}},"1650251728473":{"id":1650251728473,"type":"chart","rect":{"x":16,"y":48,"width":300,"height":300},"option":{"title":{"text":"饼图"},"tooltip":{"trigger":"item"},"dataset":{"source":[]},"series":[{"type":"pie"}]},"config":{"dataUrl":"","autoFlash":false,"interval":1,"intervalID":-1}}},"width":1920,"height":1080,"scale":0.5}';
     return JSON.parse(data);
   }

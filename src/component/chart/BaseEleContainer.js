@@ -8,24 +8,8 @@ export default class BaseEleContainer extends React.Component {
     };
     this.moveable = false;
     this.containerEle = null;
-    //this.chartEle = null;
     this.ele = null;
-    //this.chartInstance = null;
-    //this.resizeObserver = new ResizeObserver((entries) => {
-    //  for(const entry of entries){
-    //    this.containerResizeHandler();
-    //  }
-    //});
   }
-  //componentDidMount(){
-  //  //this.chartInstance = echarts.init(this.chartEle);
-  //  //this.resizeObserver.observe(this.chartEle);
-  //  //this.chartInstance.setOption(this.props.option);
-  //}
-  //componentWillUnmount(){
-  //  this.chartInstance.dispose();
-  //  this.chartInstance = null;
-  //}
   shouldComponentUpdate(nextProps, nextState){
     if(!nextProps.rect){
       return true;
@@ -37,6 +21,26 @@ export default class BaseEleContainer extends React.Component {
             || !(nextState.toolVisible === this.state.toolVisible)
             || !(x === pX && y === pY && width === pW && height === pH);
     
+  }
+  componentDidMount(){
+    if(this.ele){
+      this.ele.innerHTML = this.props.innerHtml;
+      const style = this.props.style;
+      Object.keys(style).forEach((key) => {
+        if(key in this.ele.style){
+          this.ele.style = style[key];
+        }
+      });
+    }
+  }
+  componentDidUpdate(){
+    this.ele.innerHTML = this.props.innerHtml;
+    const style = this.props.style;
+    Object.keys(style).forEach((key) => {
+      if(key in this.ele.style){
+        this.ele.style = style[key];
+      }
+    });
   }
   render(){
     return (
@@ -58,8 +62,11 @@ export default class BaseEleContainer extends React.Component {
             height: "100%",
             width: "100%",
           }}
-          ref={this.setChartEle}
-          />
+          >
+          <div
+            ref={this.setEle}
+            />
+        </div>
         <BaseChartToolComponent 
           visible={this.state.toolVisible}
           scale={this.props.scale}
@@ -75,13 +82,8 @@ export default class BaseEleContainer extends React.Component {
   /*
    * event handler
    * */
-  containerResizeHandler = () => {
-    if(this.chartInstance) {
-      this.chartInstance.resize();
-    }
-  }
   clickHandler = (e) => {
-    this.props.onSetCurChartRef(this.props.id);
+    this.props.onSetCurEleRef(this.props.id);
     e.stopPropagation();
   }
   mouseDownHandler = (e) => {
@@ -136,6 +138,9 @@ export default class BaseEleContainer extends React.Component {
   /*
    * setter
    * */
+  setEle = (ele) => {
+    this.ele = ele;
+  }
   setMoveable = (moveable) => {
     this.moveable = moveable;
     if(this.containerEle && moveable){
@@ -160,27 +165,24 @@ export default class BaseEleContainer extends React.Component {
   /*
    * common
    * */
-  //updateChart = () => {
-  //  this.chartInstance.setOption(this.props.option);
-  //}
   containerMoveH = (movementH, scale) => {
     const newRect = {...this.props.rect};
     newRect.height += movementH / scale;
-    this.props.onSetInstanceRect(this.props.id, newRect);
+    this.props.onSetEleRect(this.props.id, newRect);
   }
   containerMoveW = (movementW, scale) => {
     const newRect = {...this.props.rect};
     newRect.width += movementW / scale;
-    this.props.onSetInstanceRect(this.props.id, newRect);
+    this.props.onSetEleRect(this.props.id, newRect);
   }
   containerMoveX = (movementX, scale) => {
     const newRect = {...this.props.rect};
     newRect.x += movementX / scale;
-    this.props.onSetInstanceRect(this.props.id, newRect);
+    this.props.onSetEleRect(this.props.id, newRect);
   }
   containerMoveY = (movementY, scale) => {
     const newRect = {...this.props.rect};
     newRect.y += movementY / scale;
-    this.props.onSetInstanceRect(this.props.id, newRect);
+    this.props.onSetEleRect(this.props.id, newRect);
   }
 }
