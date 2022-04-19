@@ -1,7 +1,7 @@
 import React from "react";
 import { Slider, InputNumber, Row, Col} from "antd";
-import BaseChartContainer from "../chart/BaseChartContainer";
-import BaseEleContainer from "../chart/BaseEleContainer";
+import BaseChartContainer from "./chart/BaseChartContainer";
+import BaseEleContainer from "./chart/BaseEleContainer";
 import ChartConfigSider from "./ChartConfigSider";
 import "../../style/chartOperationArea.css";
 export default class ChartOperationArea extends React.Component {
@@ -44,7 +44,6 @@ export default class ChartOperationArea extends React.Component {
     if(this.viewScopeEle && this.thumbEle){
       this.initEditSider(this.state.scale);
     }
-    return;
     (this.fetchInstancesData()).then((data) => {
       const {scale, width, height, eles, charts} = data;
       Object.keys(charts).forEach((key) => {

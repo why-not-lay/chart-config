@@ -1,7 +1,6 @@
 import React from "react";
-//import { Menu, Drawer } from "antd";
 import { Menu, Layout} from "antd";
-import defaultOptinos from "../chart/ChartDefaultOptions";
+import defaultOptinos from "./chart/ChartDefaultOptions";
 const {Sider} = Layout;
 export default class ChartSelectSider extends React.Component {
   constructor(props){

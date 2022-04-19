@@ -9,7 +9,8 @@ resolve("src")
 module.exports = {
   mode: "development",
   entry: {
-    index: "./src/index.js",
+    chartConfig: "./src/component/configPlatform/index.js",
+    chartShower: "./src/component/chartShower/index.js"
   },
   output: {
     filename: "[name].bundle.js",
@@ -22,7 +23,16 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/index.html"
+      title: "图表配置",
+      template: "./src/index.html",
+      filename: "chartConfig.html",
+      chunks: ["chartConfig"],
+    }),
+    new HtmlWebpackPlugin({
+      title: "图表展示",
+      template: "./src/index.html",
+      filename: "chartShower.html",
+      chunks: ["chartShower"],
     }),
   ],
   module: {
