@@ -26,7 +26,9 @@
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.17.0",
     "antd": "^4.19.1",
+    "axios": "^0.26.1",
     "echarts": "^5.3.1",
+    "html2canvas": "^1.4.1",
     "react-copy-to-clipboard": "^5.1.0",
     "react-json-view": "^1.21.3"
   }

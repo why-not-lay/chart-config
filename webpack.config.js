@@ -10,7 +10,8 @@ module.exports = {
   mode: "development",
   entry: {
     chartConfig: "./src/component/configPlatform/index.js",
-    chartShower: "./src/component/chartShower/index.js"
+    chartShower: "./src/component/chartShower/index.js",
+    chartSelect: "./src/component/chartSelect/index.js",
   },
   output: {
     filename: "[name].bundle.js",
@@ -22,6 +23,12 @@ module.exports = {
     static: "./dist",
   },
   plugins: [
+    new HtmlWebpackPlugin({
+      title: "图表设置",
+      template: "./src/index.html",
+      filename: "chartSelect.html",
+      chunks: ["chartSelect"],
+    }),
     new HtmlWebpackPlugin({
       title: "图表配置",
       template: "./src/index.html",
