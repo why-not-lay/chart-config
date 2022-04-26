@@ -3,7 +3,7 @@ import { Row, Col, Layout, Button } from "antd";
 const {Header, Content} = Layout;
 
 import ChartBasePlatform from "./ChartBasePlatform";
-import "../../style/basePlatform.css"
+//import "../../style/basePlatform.css"
 
 export default class BasePlatform extends React.Component {
   constructor(props){

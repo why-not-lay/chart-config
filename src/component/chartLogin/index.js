@@ -1,11 +1,11 @@
 import ReactDOM from "react-dom";
 import React from "react";
-import ChartSelect from "./ChartSelect"
 import "antd/dist/antd.css";
+import ChartLogin from "./chartLogin";
 
 ReactDOM.render(
-  (<div className="chart-select-container">
-    <ChartSelect></ChartSelect>
+  (<div className="chart-login-container">
+    <ChartLogin></ChartLogin>
   </div>),
   document.getElementById("app")
 );

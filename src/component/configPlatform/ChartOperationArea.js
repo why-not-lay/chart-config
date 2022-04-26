@@ -1,9 +1,10 @@
 import React from "react";
+import html2canvas from "html2canvas";
 import { Slider, InputNumber, Row, Col} from "antd";
 import BaseChartContainer from "./chart/BaseChartContainer";
 import BaseEleContainer from "./chart/BaseEleContainer";
 import ChartConfigSider from "./ChartConfigSider";
-import "../../style/chartOperationArea.css";
+//import "../../style/chartOperationArea.css";
 export default class ChartOperationArea extends React.Component {
   constructor(props){
     super(props);
@@ -28,6 +29,7 @@ export default class ChartOperationArea extends React.Component {
       eles: {},
     }
     this.viewScopeEle = null;
+    this.operationAreaEle = null;
     this.thumbEle = null;
     this.thumbEleCtx = null;
     this.thumbEleRectColor = "yellow";
@@ -135,6 +137,7 @@ export default class ChartOperationArea extends React.Component {
               transform: `scale(${this.state.scale}`,
               transformOrigin: "0 0",
             }}
+            ref={this.setOperationAreaEle}
             onClick={this.canvasClickHandler}
             >
             {chartItems}
@@ -446,6 +449,9 @@ export default class ChartOperationArea extends React.Component {
       this.redrawThumb();
     });
   }
+  setOperationAreaEle = (ele) => {
+    this.operationAreaEle = ele;
+  }
   setViewScopeEle = (ele) => {
     this.viewScopeEle = ele;
     this.resizeObserver.observe(this.viewScopeEle);
@@ -656,14 +662,21 @@ export default class ChartOperationArea extends React.Component {
       scale: 0.5,
     };
   }
+  getViewScopeImg = async() => {
+    const canvas = await html2canvas(this.operationAreaEle);
+    return canvas;
+  }
   saveInstances = async () => {
-    await (new Promise((resolve) => {
-      setTimeout((() => {
-        const data = JSON.stringify(this.getInstancesData());
-        console.log(data);
-        resolve();
-      }).bind(this), 1000);
-    }));
+    const canvas = await this.getViewScopeImg();
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
+    console.log(dataUrl);
+    //await (new Promise((resolve) => {
+    //  setTimeout((() => {
+    //    const data = JSON.stringify(this.getInstancesData());
+    //    console.log(data);
+    //    resolve();
+    //  }).bind(this), 1000);
+    //}));
   }
   fetchInstancesData = async () => {
     await (new Promise((resolve) => {
