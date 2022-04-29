@@ -27,13 +27,6 @@ export default class BasePlatform extends React.Component {
                 保存
               </Button>
             </Col>
-            <Col>
-              <Button
-                type="primary"
-                >
-                返回
-              </Button>
-            </Col>
           </Row>
         </Header>
         <Content>

@@ -1,10 +1,10 @@
 import React from "react";
 import html2canvas from "html2canvas";
-import { Slider, InputNumber, Row, Col} from "antd";
+import { Slider, InputNumber, Row, Col, message} from "antd";
 import BaseChartContainer from "./chart/BaseChartContainer";
 import BaseEleContainer from "./chart/BaseEleContainer";
 import ChartConfigSider from "./ChartConfigSider";
-//import "../../style/chartOperationArea.css";
+import { requestGet, requestPost } from "../../util/request";
 export default class ChartOperationArea extends React.Component {
   constructor(props){
     super(props);
@@ -28,6 +28,8 @@ export default class ChartOperationArea extends React.Component {
       charts: {},
       eles: {},
     }
+    this.cid = "";
+    this.fetchUrl = "";
     this.viewScopeEle = null;
     this.operationAreaEle = null;
     this.thumbEle = null;
@@ -52,7 +54,13 @@ export default class ChartOperationArea extends React.Component {
         const {autoFlash, dataUrl, interval} = charts[key].config;
         if(autoFlash && dataUrl){
           const intervalID = setInterval(() => {
-            console.log("getter");
+            requestGet(dataUrl)
+              .then((res) => {
+                charts[key].option.dataset.source = res.data;
+              })
+              .catch((err) => {
+                console.error(err);
+              });
           }, interval * 1000);
           charts[key].config.intervalID = intervalID;
         }
@@ -283,7 +291,15 @@ export default class ChartOperationArea extends React.Component {
       return;
     }
     const intervalID = setInterval(() => {
-      console.log("getter");
+      requestGet(config.dataUrl)
+        .then((res) => {
+          const newOption = {...this.state.charts[id].option};
+          newOption.dataset.source = res.data;
+          this.setChartOption(id, newOption);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }, config.interval * 1000);
     const newConfig = {...config};
     newConfig.intervalID = intervalID;
@@ -617,6 +633,10 @@ export default class ChartOperationArea extends React.Component {
     }
     this.setConfigSider(false);
     this.clearCurInstanceRef();
+    if(this.state.curType === "chart"){
+      const intervalID = this.state.charts[id].config.intervalID;
+      clearInterval(intervalID);
+    }
     const newInstances = {...instances};
     delete newInstances[id];
     if(this.state.curType === "chart"){
@@ -657,9 +677,9 @@ export default class ChartOperationArea extends React.Component {
     return {
       eles: eles,
       charts: charts,
-      width: 1920,
-      height: 1080,
-      scale: 0.5,
+      width: this.state.width,
+      height: this.state.height,
+      scale: this.state.scale,
     };
   }
   getViewScopeImg = async() => {
@@ -669,22 +689,49 @@ export default class ChartOperationArea extends React.Component {
   saveInstances = async () => {
     const canvas = await this.getViewScopeImg();
     const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-    console.log(dataUrl);
-    //await (new Promise((resolve) => {
-    //  setTimeout((() => {
-    //    const data = JSON.stringify(this.getInstancesData());
-    //    console.log(data);
-    //    resolve();
-    //  }).bind(this), 1000);
-    //}));
+    const instanceData = this.getInstancesData();
+    const info = {
+      data: instanceData,
+      thumb: dataUrl,
+    }
+    const data = new FormData();
+    data.append("cid", this.cid);
+    data.append("info", JSON.stringify(info));
+    const res = await requestPost("/chart/set/info", data)
+    if(res.success){
+      message.info("保存成功");
+    } else {
+      message.error("保存失败");
+    }
   }
   fetchInstancesData = async () => {
-    await (new Promise((resolve) => {
-      setTimeout((() => {
-        resolve();
-      }).bind(this), 1000);
-    }));
-    const data = '{"eles":{},"charts":{"1650251650999":{"id":1650251650999,"type":"chart","rect":{"x":330,"y":18,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"efef","autoFlash":true,"interval":10,"intervalID":-1}},"1650251723272":{"id":1650251723272,"type":"chart","rect":{"x":206,"y":412,"width":300,"height":300},"option":{"title":{"text":"柱状图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"bar"}]},"config":{"dataUrl":"","autoFlash":true,"interval":1,"intervalID":-1}},"1650251728473":{"id":1650251728473,"type":"chart","rect":{"x":16,"y":48,"width":300,"height":300},"option":{"title":{"text":"饼图"},"tooltip":{"trigger":"item"},"dataset":{"source":[]},"series":[{"type":"pie"}]},"config":{"dataUrl":"","autoFlash":false,"interval":1,"intervalID":-1}}},"width":1920,"height":1080,"scale":0.5}';
+    const queries = this.resolveQuery(window.location.search.slice(1));
+    this.fetchUrl = `/chart/get?cid=${queries.cid}`
+    this.cid = queries.cid;
+    let data = `{"eles":{}, "charts":{},"width":1920, "height":1080, "scale":0.5}`;
+    try {
+      const res = await requestGet(this.fetchUrl);
+      if(res.success){
+        data = res.data[0].data;
+      } else {
+        message.error(res.err);
+      }
+    } catch (e) {
+      /* handle error */
+    }
     return JSON.parse(data);
+  }
+  resolveQuery = (queryStr) => {
+    const obj = {};
+    queryStr.split("&").forEach((query) => {
+      const idx = query.indexOf("=");
+      if(idx === -1){
+        return;
+      }
+      const key = query.slice(0, idx);
+      const value = query.slice(idx + 1);
+      obj[key] = value;
+    });
+    return obj;
   }
 } 

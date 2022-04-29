@@ -15,7 +15,7 @@ module.exports = {
     vendors: ["react", "antd"],
   },
   output: {
-    filename: "[name].bundle.js",
+    filename: "js/[name].bundle.js",
     path: path.resolve(__dirname, "dist"),
     clean: true,
   },
@@ -34,25 +34,25 @@ module.exports = {
     new HtmlWebpackPlugin({
       title: "图表设置",
       template: "./src/index.html",
-      filename: "chartSelect.html",
+      filename: "html/chartSelect.html",
       chunks: ["chartSelect"],
     }),
     new HtmlWebpackPlugin({
       title: "图表配置",
       template: "./src/index.html",
-      filename: "chartConfig.html",
+      filename: "html/chartConfig.html",
       chunks: ["chartConfig"],
     }),
     new HtmlWebpackPlugin({
       title: "图表展示",
       template: "./src/index.html",
-      filename: "chartShower.html",
+      filename: "html/chartShower.html",
       chunks: ["chartShower"],
     }),
     new HtmlWebpackPlugin({
       title: "图表登录",
       template: "./src/index.html",
-      filename: "chartLogin.html",
+      filename: "html/chartLogin.html",
       chunks: ["chartLogin"],
     })
   ],

@@ -1,74 +1,103 @@
 import React from "react";
-import {Form, Input, Button, Card} from "antd";
+import {Form, Input, Button, Card, message, Spin} from "antd";
 import {UserOutlined, LockOutlined} from "@ant-design/icons";
+import MD5 from "js-md5";
+import { requestPost } from "../../util/request";
 
 export default class ChartLogin extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-
+      spinning: false,
     };
   }
   render(){
     return (
-      <div
-        style={{
-          height: "100vh",
-          width: "100vw",
-          background: "#ececec",
-        }}
+      <Spin
+        spinning={this.state.spinning}
+        tip="登录中"
         >
-        <Card
-          title="用户登录"
-          bordered={false}
+        <div
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "300px",
-            borderRadius: "10px",
+            height: "100vh",
+            width: "100vw",
+            background: "#ececec",
           }}
           >
-          <Form
-            name="login"
-            onFinish={this.onFinish}
+          <Card
+            title="用户登录"
+            bordered={false}
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "300px",
+              borderRadius: "10px",
+            }}
             >
-            <Form.Item
-              name="username"
-              rules={[{required: true, message: "请输入用户名"}]}
+            <Form
+              name="login"
+              onFinish={this.onFinish}
               >
-              <Input 
-                prefix={<UserOutlined />}
-                placeholder="用户名"
-                />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              rules={[{required: true, message: "请输入密码"}]}
-              >
-              <Input
-                prefix={<LockOutlined />}
-                type="password"
-                placeholder="密码"
-                />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
+              <Form.Item
+                name="username"
+                rules={[{required: true, message: "请输入用户名"}]}
                 >
-                登录
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
-      </div>
+                <Input 
+                  prefix={<UserOutlined />}
+                  placeholder="用户名"
+                  />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                rules={[{required: true, message: "请输入密码"}]}
+                >
+                <Input
+                  prefix={<LockOutlined />}
+                  type="password"
+                  placeholder="密码"
+                  />
+              </Form.Item>
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  >
+                  登录
+                </Button>
+              </Form.Item>
+            </Form>
+          </Card>
+        </div>
+
+      </Spin>
     );
   }
   onFinish = (values) => {
-    console.log(values);
     const data = new FormData();
-    
+    const {username, password} = values;
+    const url = "/chart/login"
+    data.append("username", username);
+    data.append("password", MD5(password).toUpperCase())
+    this.setState({
+      spinning: true,
+    });
+    requestPost(url, data)
+      .then((res) => {
+        if(res.success){
+          window.location.replace("/chart/select");
+        } else {
+          message.error(res.err);
+        }
+      })
+      .catch((res) => {
+        message.error(res.err);
+      })
+      .finally(() => {
+        this.setState({
+          spinning: false,
+        });
+      })
   }
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { message, Spin } from "antd";
 import * as echarts from "echarts";
+import { requestGet } from "../../util/request";
 export default class ChartShower extends React.Component {
   constructor(props){
     super(props);
@@ -9,13 +10,33 @@ export default class ChartShower extends React.Component {
       height: 1080,
       charts: {},
       eles: {},
-      loading: true,
+      loading: false,
     };
+    this.fetchUrl = "";
   }
   componentDidMount(){
-    const raw = '{"eles":{},"charts":{"1650251650999":{"id":1650251650999,"type":"chart","rect":{"x":330,"y":18,"width":300,"height":300},"option":{"title":{"text":"折线图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"line","smooth":true}]},"config":{"dataUrl":"efef","autoFlash":true,"interval":10,"intervalID":-1}},"1650251723272":{"id":1650251723272,"type":"chart","rect":{"x":206,"y":412,"width":300,"height":300},"option":{"title":{"text":"柱状图"},"tooltip":{"trigger":"axis"},"xAxis":{},"yAxis":{"type":"value"},"dataset":{"source":[]},"series":[{"type":"bar"}]},"config":{"dataUrl":"","autoFlash":true,"interval":1,"intervalID":-1}},"1650251728473":{"id":1650251728473,"type":"chart","rect":{"x":16,"y":48,"width":300,"height":300},"option":{"title":{"text":"饼图"},"tooltip":{"trigger":"item"},"dataset":{"source":[]},"series":[{"type":"pie"}]},"config":{"dataUrl":"","autoFlash":false,"interval":1,"intervalID":-1}}},"width":1920,"height":1080,"scale":0.5}';
-    const data = JSON.parse(raw);
-    this.initData(data);
+    const queries = this.resolveQuery(window.location.search.slice(1));
+    this.fetchUrl = `/chart/get?cid=${queries.cid}`
+    this.setState({
+      loading: true,
+    });
+    requestGet(this.fetchUrl)
+      .then((res) => {
+        if(res.success){
+          const data = JSON.parse(res.data[0].data);
+          this.initData(data);
+        } else {
+          message.error(res.err);
+        }
+      })
+      .catch((err) => {
+        message.error("网络错误");
+      })
+      .finally(() => {
+        this.setState({
+          loading: false,
+        });
+      });
   }
   componentDidUpdate(){
   }
@@ -134,33 +155,30 @@ export default class ChartShower extends React.Component {
     }, interval * 1000);
     return id;
   }
-  fetchData = async (url) => {
-    await new Promise((resolve) => {
-      setTimeout(()=>{
-        resolve();
-      }, 1000);
-    });
-    return "getting";
-  }
   mergeChartData = async (instance, url, option) => {
     if(!url){
       return true;
     }
-    let maxRetry = 3;
-    while(maxRetry){
-      try {
-        const data = await this.fetchData(url);
-        console.log(data);
-        //option.dataset.source = data;
-        //instance.setOption(option);
-        break;
-      } catch (e) {
-        maxRetry--;
-        if(!maxRetry){
-          message.error("数据请求出错，请检查网络");
-        }
+    requestGet(url)
+      .then((res) => {
+        option.dataset.source = res.data;
+        instance.setOption(option);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
+  resolveQuery = (queryStr) => {
+    const obj = {};
+    queryStr.split("&").forEach((query) => {
+      const idx = query.indexOf("=");
+      if(idx === -1){
+        return;
       }
-    }
-    return maxRetry > 0;
+      const key = query.slice(0, idx);
+      const value = query.slice(idx + 1);
+      obj[key] = value;
+    });
+    return obj;
   }
 }

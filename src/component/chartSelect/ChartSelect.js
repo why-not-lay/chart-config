@@ -3,7 +3,6 @@ import {requestGet, requestPost} from "../../util/request";
 import { 
   Row, 
   Col,
-  Spin, 
   Card, 
   Menu,
   Input,
@@ -17,9 +16,11 @@ import {
 import {
   UserOutlined,
   EditOutlined,
+  EnterOutlined,
   DeleteOutlined,
   SettingOutlined,
   PlusCircleFilled,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 const {Header, Content, Footer} = Layout;
 const {Meta} = Card;
@@ -27,12 +28,13 @@ export default class ChartSelect extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      loading: true,
       isDeleteModalVisible: false,
       isEditModalVisible: false,
       isCreateModalVisible: false,
-      total: 100,
+      isShareModalVisible: false,
+      total: 0,
       curPage: 1,
+      curPageNum: 10,
       curIdx: -1,
       chartList: [],
     };
@@ -41,22 +43,13 @@ export default class ChartSelect extends React.Component{
     this.createInputRef = null;
   }
   componentDidMount(){
-    const chartList = [
-    ]
-    for (let i = 0; i < 10; i++){
-      chartList.push(
-        {img: "", title: `t-${this.state.curPage}-${i}`, hash: Math.ceil(1000 * Math.random())}
-      );
-    }
-    this.setState({
-      chartList: chartList,
-    });
+    this.getInfo();
   }
   render(){
     const menu = (
       <Menu>
         <Menu.Item key="a-m">
-          <a>退出</a>
+          <a href="/chart/logout">退出</a>
         </Menu.Item>
       </Menu>
     );
@@ -79,6 +72,10 @@ export default class ChartSelect extends React.Component{
                 />
             }
             actions={[
+              <ShareAltOutlined
+                key={`${hash}-share`}
+                onClick={(e) => {this.onShareClick(e, idx)}}
+                />,
               <EditOutlined 
                 key={`${hash}-edit`}
                 onClick={(e) => {this.onEditClick(e, idx)}}
@@ -86,6 +83,10 @@ export default class ChartSelect extends React.Component{
               <SettingOutlined
                 key={`${hash}-settting`}
                 onClick={(e) => {this.onSettingClick(e, idx)}}
+                />,
+              <EnterOutlined
+                key={`${hash}-enter`}
+                onClick={(e) => {this.onEnterClick(e, idx)}}
                 />,
               <DeleteOutlined 
                 key={`${hash}-delete`}
@@ -168,6 +169,7 @@ export default class ChartSelect extends React.Component{
               <Pagination
                 current={this.state.curPage}
                 total={this.state.total}
+                pageSize={this.state.curPageNum}
                 hideOnSinglePage={true}
                 onChange={this.onPageChange}
                 />
@@ -198,6 +200,13 @@ export default class ChartSelect extends React.Component{
             />
         </Modal>
         <Modal
+          title="链接分享"
+          visible={this.state.isShareModalVisible}
+          onOk={this.onShareConfirmClick}
+          >
+          <p>{this.state.curIdx === -1 ? "" : `${window.location.origin}/chart/show?cid=${this.state.chartList[this.state.curIdx].hash}`}</p>
+        </Modal>
+        <Modal
           title="新图表名称"
           visible={this.state.isCreateModalVisible}
           onOk={this.onCreateConfirmClick}
@@ -214,6 +223,18 @@ export default class ChartSelect extends React.Component{
       </Layout>
     );
   }
+  onShareClick = (e, idx) => {
+    this.setState({
+      curIdx: idx,
+      isShareModalVisible: true,
+    });
+  }
+  onShareConfirmClick = () => {
+    this.setState({
+      isShareModalVisible: false,
+      curIdx: -1,
+    });
+  }
   onEditClick = (e, idx) => {
     this.setState({
       curIdx: idx,
@@ -222,13 +243,26 @@ export default class ChartSelect extends React.Component{
   }
   onEditConfirmClick = () => {
     const value = this.editInputRef.input.value;
-    /*
-     * network
-     * */
-    this.setState({
-      isEditModalVisible: false,
-      curIdx: -1,
-    });
+    const data = new FormData();
+    const hash = this.state.chartList[this.state.curIdx].hash;
+    data.append("cid", hash);
+    data.append("name", value);
+    requestPost("/chart/set/name", data)
+      .then((res) => {
+        if(res.success){
+          message.info("修改成功");
+          this.getInfo();
+        }
+      })
+      .catch((err) => {
+        message.error("操作有误");
+      })
+      .finally(() => {
+        this.setState({
+          isEditModalVisible: false,
+          curIdx: -1,
+        });
+      })
   }
   onEditCancelClick = () => {
     this.setState({
@@ -243,13 +277,25 @@ export default class ChartSelect extends React.Component{
     });
   }
   onDeleteConfirmClick = () => {
-    /*
-     * network
-     * */
-    this.setState({
-      curIdx: -1,
-      isDeleteModalVisible: false,
-    });
+    const hash = this.state.chartList[this.state.curIdx].hash;
+    requestGet(`/chart/delete?cid=${hash}`)
+      .then((res) => {
+        if(res.success){
+          message.info("删除成功");
+          this.getInfo();
+        } else {
+          message.error(res.error);
+        }
+      })
+      .catch((err) => {
+        message.error("操作有误");
+      })
+      .finally(() => {
+        this.setState({
+          curIdx: -1,
+          isDeleteModalVisible: false,
+        });
+      });
   }
   onDeleteCancelClick = () => {
     this.setState({
@@ -263,39 +309,78 @@ export default class ChartSelect extends React.Component{
     });
   }
   onCreateConfirmClick = () => {
-    /*
-     * network
-     * */
     const value = this.createInputRef.input.value;
-    this.setState({
-      isCreateModalVisible: false,
-    });
+    const data = new FormData();
+    data.append("name", value);
+    requestPost("/chart/add", data)
+      .then((res) => {
+        if(res.success){
+          message.info("创建成功");
+          this.getInfo();
+        } else {
+          message.error(res.err);
+        }
+      })
+      .catch((err) => {
+        message.error("操作错误");
+      })
+      .finally(() => {
+        this.setState({
+          isCreateModalVisible: false,
+        });
+      })
   }
   onCreateCancelClick = () => {
     this.setState({
       isCreateModalVisible: false,
     });
   }
+  onEnterClick = (e, idx) => {
+    const chart = this.state.chartList[idx];
+    const url = `/chart/show?cid=${chart.hash}`;
+    window.open(url);
+  }
   onSettingClick = (e, idx) => {
-    /**
-     * 跳转
-     */
+    const chart = this.state.chartList[idx];
+    const url = `/chart/operation?cid=${chart.hash}`;
+    window.open(url);
   }
   onPageChange = (page, pageSize) => {
     this.setState({
       curPage: page,
+      curPageNum: pageSize,
+    },
+    () => {
+      this.getInfo();
     });
   }
-  sendMessage = async (url, data) => {
+  getInfo = async () => {
     try {
-      const rp = await requestPost(url, data);
-      const {success, data, err} = rp;
-      if(!success){
-        message.error("请求出错，请检查网络");
-        return;
+      const url = `/chart/info?page=${this.state.curPage}&pageNum=${this.state.curPageNum}`
+      const res = await requestGet(url);
+      if(res.success){
+        this.updateChartList(res.data);
+      } else {
+        message.error("请求出错，请检查网络")
       }
     } catch (e) {
-      message.error("操作错误");
+
     }
+  }
+
+  updateChartList = (data) => {
+    const chartList = [];
+    const {list, total} = data;
+    list.forEach((chart) => {
+      chartList.push({
+        img: chart.thumb,
+        title: chart.name,
+        hash: chart.hash,
+      });
+    });
+    this.setState({
+      chartList: chartList,
+      total: total,
+    });
   }
 }
