@@ -55,4 +55,7 @@ export default class ChartBasePlatform extends React.Component {
   addChart = (chart) => {
     this.chartOperationAreaRef.addChart(chart);
   }
+  exportImage = () => {
+    this.chartOperationAreaRef.exportImage();
+  }
 }

@@ -15,16 +15,24 @@ export default class BasePlatform extends React.Component {
       <Layout className="base-platform-container">
         <Header>
           <Row
-            gutter={16}
+            gutter={8}
             >
             <Col
-              offset={22}
+              offset={20}
               >
               <Button
                 type="primary"
                 onClick={(e) => {this.saveInstances()}}
                 >
                 保存
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                onClick={(e) => {this.exportImage()}}
+                >
+                导出图片
               </Button>
             </Col>
           </Row>
@@ -36,6 +44,9 @@ export default class BasePlatform extends React.Component {
         </Content>
       </Layout>
     );
+  }
+  exportImage = () => {
+    this.chartBasePlatformRef.exportImage();
   }
   saveInstances = () => {
     this.chartBasePlatformRef.saveInstances();

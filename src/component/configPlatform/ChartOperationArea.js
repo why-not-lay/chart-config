@@ -686,6 +686,14 @@ export default class ChartOperationArea extends React.Component {
     const canvas = await html2canvas(this.operationAreaEle);
     return canvas;
   }
+  exportImage = async() => {
+    const canvas = await this.getViewScopeImg();
+    const dataUrl = canvas.toDataURL("image/jpeg", 1);
+    const dlLink = document.createElement("a");
+    dlLink.download = `${(new Date()).getTime()}.jpg`;
+    dlLink.href = dataUrl;
+    dlLink.click();
+  }
   saveInstances = async () => {
     const canvas = await this.getViewScopeImg();
     const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
