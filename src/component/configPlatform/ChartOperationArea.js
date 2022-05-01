@@ -56,7 +56,17 @@ export default class ChartOperationArea extends React.Component {
           const intervalID = setInterval(() => {
             requestGet(dataUrl)
               .then((res) => {
-                charts[key].option.dataset.source = res.data;
+                try {
+                  if(!res.data){
+                    return;
+                  }
+                  const newOption = {...this.state.charts[key].option}
+                  newOption.dataset.source = res.data;
+                  this.setChartOption(key, newOption);
+                } catch (error) {
+                  console.error(error);
+                }
+                
               })
               .catch((err) => {
                 console.error(err);
@@ -218,13 +228,13 @@ export default class ChartOperationArea extends React.Component {
           curStyle={this.state.curStyle}
           curInnerHtml={this.state.curInnerHtml}
           ref={this.setChartConfigSiderRef}
-          onSetInstanceRect={this.setInstanceRect}
-          onSetChartOption={this.setChartOption}
-          onSetChartConfig={this.setChartConfig}
-          onSetEleStyle={this.setEleStyle}
-          onSetEleInnerHtml={this.setEleInnerHtml}
+          onSetInstanceRect={this.setInstanceRect.bind(this)}
+          onSetChartOption={this.setChartOption.bind(this)}
+          onSetChartConfig={this.setChartConfig.bind(this)}
+          onSetEleStyle={this.setEleStyle.bind(this)}
+          onSetEleInnerHtml={this.setEleInnerHtml.bind(this)}
           onRemoveInstance={this.removeInstance.bind(this)}
-          onSetIntervalGetter={this.setIntervalGetter}
+          onSetIntervalGetter={this.setIntervalGetter.bind(this)}
           onClearCurChartRef={this.clearCurInstanceRef.bind(this)}
           />
       </div>
@@ -294,7 +304,15 @@ export default class ChartOperationArea extends React.Component {
       requestGet(config.dataUrl)
         .then((res) => {
           const newOption = {...this.state.charts[id].option};
-          newOption.dataset.source = res.data;
+          try {
+            if(!res.data){
+              return;
+            }
+            newOption.dataset.source = res.data;
+          } catch (error) {
+            console.error(error);
+            newOption.dataset.source = [];
+          }
           this.setChartOption(id, newOption);
         })
         .catch((err) => {
@@ -469,8 +487,10 @@ export default class ChartOperationArea extends React.Component {
     this.operationAreaEle = ele;
   }
   setViewScopeEle = (ele) => {
-    this.viewScopeEle = ele;
-    this.resizeObserver.observe(this.viewScopeEle);
+    if(ele instanceof Element){
+      this.viewScopeEle = ele;
+      this.resizeObserver.observe(this.viewScopeEle);
+    }
   }
   setThumbEle = (ele) => {
     this.thumbEle = ele;

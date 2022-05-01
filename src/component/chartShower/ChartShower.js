@@ -161,7 +161,15 @@ export default class ChartShower extends React.Component {
     }
     requestGet(url)
       .then((res) => {
-        option.dataset.source = res.data;
+        try {
+          if(!res.data){
+            return;
+          }
+          option.dataset.source = res.data;
+        } catch (e) {
+          console.error(e);
+          option.dataset.source = [];
+        }
         instance.setOption(option);
       })
       .catch((err) => {

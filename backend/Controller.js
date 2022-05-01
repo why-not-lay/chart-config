@@ -1,4 +1,5 @@
 const StaticReader = require("./StaticReader");
+const DataGenerator = require("./DataGenerator");
 const DBReader = require("./DBReader");
 module.exports = class Controller {
   #maxStaticFile;
@@ -207,6 +208,27 @@ module.exports = class Controller {
     } finally {
       return res;
     }
+  }
+  getRandomDataListByDate(row = 100, col = 1){
+    const d = new Date();
+    const data = [];
+    const head = ["data"];
+    for(let i = 0; i < col; i++) {
+      head.push(`c${i+1}`);
+    }
+    data.push(head);
+    for(let i = 0; i < row; i++) {
+      let l1 = DataGenerator.GenerateIntegerArray(col).data;
+      if(!(l1 instanceof Array)){
+        l1 = [l1];
+      }
+      l1.splice(0,0, `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`)
+      data.push(l1);
+      d.setSeconds(d.getSeconds() + 1);
+    }
+    return {
+      data: data,
+    };
   }
   #clearChartCache(hash){
     if(!(hash in this.#chartData)){

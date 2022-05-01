@@ -11,6 +11,7 @@ import {
   Collapse, 
   InputNumber, 
 } from "antd";
+import { requestGet } from "../../util/request";
 const {Panel} = Collapse;
 const {Search, TextArea} = Input;
 export default class ChartConfigSider extends React.Component {
@@ -98,7 +99,7 @@ export default class ChartConfigSider extends React.Component {
                   enterButton="获取"
                   key={`${this.props.id}-dataUrl`}
                   defaultValue={this.props.curConfig ? this.props.curConfig.dataUrl: ""}
-                  onSearch={this.setData}
+                  onSearch={this.onSearchClick}
                   loading={this.state.searching}
                   />
               </Form.Item>
@@ -306,6 +307,9 @@ export default class ChartConfigSider extends React.Component {
   /*
    * event handler
    * */
+  onSearchClick = (e) => {
+    this.setData(e);
+  }
   onInnerHtmlExportClick = (e) => {
     this.exportData(this.props.curInnerHtml);
   }
@@ -370,7 +374,6 @@ export default class ChartConfigSider extends React.Component {
     }
   }
   onSwitchChange = (value) => {
-    console.log(value)
     const newObj = {...this.props.curConfig}
     newObj.autoFlash = value;
     this.props.onSetChartConfig(this.props.id, newObj);
@@ -415,6 +418,10 @@ export default class ChartConfigSider extends React.Component {
       return;
     }
     const newObj = this.locateValue(existing_src, namespace);
+    if(typeof(new_value) === "object"){
+      const key = Object.keys(new_value)[0];
+      new_value[key] = "";
+    }
     newObj[name] = new_value;
     this.props.onSetChartOption(this.props.id, existing_src);
   }
@@ -429,23 +436,11 @@ export default class ChartConfigSider extends React.Component {
     const newObj = {...this.props.curRect}
     newObj[key] = value;
     //const {x, y, width, height} = newObj;
-    this.props.onSetChartRect(this.props.id, newObj);
+    //this.props.onSetChartRect(this.props.id, newObj);
+    this.props.onSetInstanceRect(this.props.id, newObj);
   }
   getValue = (key) => {
     return this.props.curRect ? this.props.curRect[key] : 0
-  }
-  getData = async(url) => {
-    const data = [
-      ['product', '2015', '2016', '2017'],
-      ['Matcha Latte', 43.3, 85.8, 93.7],
-      ['Milk Tea', 83.1, 73.4, 55.1],
-      ['Cheese Cocoa', 86.4, 65.2, 82.5],
-      ['Walnut Brownie', 72.4, 53.9, 39.1],
-    ]
-    await new Promise((resolve) => {
-      setTimeout(()=>{console.log("getting data"), resolve(1)}, 3000);
-    });
-    return data;
   }
   locateValue = (rawObj, path) => {
     let obj = rawObj;
@@ -455,10 +450,7 @@ export default class ChartConfigSider extends React.Component {
     return obj;
   }
   mergeData = (newData) => {
-    const {xAxis, yAxis} = newData;
     const newOption = {...this.props.curOption};
-    //newOption.xAxis.data = xAxis;
-    //newOption.series[0].data = yAxis;
     newOption.dataset.source = newData;
     return newOption;
   }
@@ -470,27 +462,31 @@ export default class ChartConfigSider extends React.Component {
     this.setState({
       searching: true,
     });
-    await this.fetchData(value)
+    //await this.fetchData(value)
+    const res = await requestGet(value);
     this.setState({
       searching: false,
     });
-    const newObj = {...this.props.curConfig};
-    newObj.dataUrl = value;
-    this.props.onSetChartConfig(this.props.id, newObj);
-    if(this.props.curConfig.autoFlash) {
-      this.props.onSetIntervalGetter(this.props.id);
-    }
-  }
-  fetchData = async (url) => {
-    console.log(url);
-    let data = [];
+    if(!res.success){
+      console.error(res.err);
+      return;
+    } 
     try {
-      data = await this.getData(url);
+      const newData = res.data;
+      if(!newData){
+        return;
+      }
+      const newOption = this.mergeData(newData);
+      this.props.onSetChartOption(this.props.id, newOption);
+      const newObj = {...this.props.curConfig};
+      newObj.dataUrl = value;
+      this.props.onSetChartConfig(this.props.id, newObj);
+      if(this.props.curConfig.autoFlash) {
+        this.props.onSetIntervalGetter(this.props.id);
+      }
     } catch (e) {
-      /* handle error */
+      console.error(e);
     }
-    const newOption = this.mergeData(data)
-    this.props.onSetChartOption(this.props.id, newOption);
   }
   setConfigInputRef = (ref) => {
     this.configInputRef = ref;
@@ -503,19 +499,16 @@ export default class ChartConfigSider extends React.Component {
     if(rect){
       const newRect = {...this.props.curRect};
       Object.assign(newRect, rect);
-      console.log(newRect);
       this.props.onSetChartRect(this.props.id, newRect);
     }
     if(option){
       const newOption = {...this.props.curOption};
       Object.assign(newOption, option);
-      console.log(newOption);
       this.props.onSetChartOption(this.props.id, newOption);
     }
     if(config){
       const newConfig = {...this.props.curConfig};
       Object.assign(newConfig, config);
-      console.log(newConfig);
       this.props.onSetChartConfig(this.props.id, newConfig);
     }
   }

@@ -39,6 +39,7 @@
     "koa-router": "^10.1.1",
     "koa-session": "^6.2.0",
     "koa-static": "^5.0.0",
+    "mockjs": "^1.1.0",
     "react-copy-to-clipboard": "^5.1.0",
     "react-json-view": "^1.21.3",
     "uglifyjs-webpack-plugin": "^2.2.0"

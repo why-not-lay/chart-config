@@ -160,7 +160,12 @@ export default class BaseChartContainer extends React.Component {
    * common
    * */
   updateChart = () => {
-    this.chartInstance.setOption(this.props.option);
+    try {
+      this.chartInstance.setOption(this.props.option);
+    } catch (e) {
+      /* handle error */
+      console.error(e);
+    }
   }
   containerMoveH = (movementH, scale) => {
     const newRect = {...this.props.rect};

@@ -102,6 +102,9 @@ router.get("/chart/show", async(ctx, next) => {
     ctx.redirect("/chart/select");
   }
 });
+router.get("/chart/api/data", async(ctx, next) => {
+  ctx.body = controller.getRandomDataListByDate();
+})
 
 //logout
 router.get("/chart/logout", async(ctx, next) => {

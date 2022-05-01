@@ -7,6 +7,7 @@ export default {
       trigger: "axis",
     },
     xAxis: {
+      type: "category",
     },
     yAxis: {
       type: "value"
@@ -29,6 +30,7 @@ export default {
       trigger: "axis",
     },
     xAxis: {
+      type: "category",
     },
     yAxis: {
       type: "value"
